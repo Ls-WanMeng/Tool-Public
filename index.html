@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT文本编辑器--你的移动端发帖帮手</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="editor-container">
+            <div class="editor-box">
+                <textarea id="editor" placeholder="在这里输入内容..."></textarea>
+
+                <!-- 底部格式控制栏 -->
+                <div class="format-controls">
+                    <div class="format-group">
+                        <select id="sizeSelect">
+                            <option value="1">超小</option>
+                            <option value="2">小</option>
+                            <option value="3">偏小</option>
+                            <option value="4" selected>中[标准]</option>
+                            <option value="5">偏大</option>
+                            <option value="6">大</option>
+                            <option value="7">超大</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="insertSizeTag(sizeSelect.value, true)">字号</button>
+                    </div>
+                    <div class="format-group">
+                        <select id="fontSelect">
+                            <option value="黑体">黑体</option>
+                            <option value="宋体" selected>宋体</option>
+                            <option value="新宋体">新宋体</option>
+                            <option value="楷体，楷体_GB2312">楷体，楷体_GB2312</option>
+                            <option value="仿宋，仿宋_GB2312">仿宋，仿宋_GB2312</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="simsun">simsun</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="insertTag('font='+fontSelect.value, '文字')">字体</button>
+                    </div>
+                    <div class="format-group">
+                        <select id="alignSelect">
+                            <option value="left">左</option>
+                            <option value="center" selected>居中</option>
+                            <option value="right">右</option>
+                        </select>
+                        <button class="btn btn-sm" onclick="insertAlignTag(alignSelect.value, true)">对齐</button>
+                    </div>
+                </div>
+                
+                <div class="color-controls">
+                    <!-- 字体颜色控件 -->
+                   
+                   <!-- 字体颜色控件 -->
+<div class="color-group">
+    <button class="btn btn-sm color-btn" id="textColorBtn" style="color: Red; border-color: Red;">字体颜色</button>
+    <div class="recent-colors" id="recentTextColors"></div>
+</div>
+
+<!-- 背景颜色控件 -->
+<div class="color-group">
+    <button class="btn btn-sm color-btn" id="bgColorBtn" style="color: Crimson; border-color: Crimson;">字背景色</button>
+    <div class="recent-colors" id="recentBgColors"></div>
+</div>
+
+                   
+                   
+                   </div>
+            </div>
+         
+            <div class="main-action-buttons">
+                <button class="btn btn-success" onclick="generateTags()">刷新预览</button>
+                <button class="btn btn-warning" onclick="copyToClipboard()">一键复制</button>
+                <button class="btn btn-danger" onclick="clearEditor()">清空内容</button>
+            </div>
+        </div>
+
+        <div class="preview-box" id="preview">
+   <p>预览区域 - 生成的标签效果将显示在这里</p><br><br><div style="text-align: center; padding: 20px; background-color: var(--light-color); border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05);"><a href="https://bbs.binmt.cc/home.php?mod=space&uid=145182&do=profile" style="color: var(--primary-color); text-decoration: none; font-weight: 500; transition: color 0.3s ease;">MT 挽梦遗酒   制</a></div>
+        </div>
+    </div>
+    
+    <div class="tag-examples">
+        <h3 onclick="toggleExamples()">
+            <span>标签使用说明与示例</span>
+            <span class="toggle-icon">▶</span>
+        </h3>
+
+        <div class="collapsible-content" id="examplesContent">
+            <!-- 基础文本样式 -->
+            <div class="tag-example">
+                <h4>基础文本样式</h4>
+                <p><code>[b]粗体[/b]</code> - <b>粗体文字效果</b></p>
+                <p><code>[i]斜体[/i]</code> - <i>斜体文字效果</i></p>
+                <p><code>[u]下划线[/u]</code> - <u>下划线效果</u></p>
+                <p><code>[s]删除线[/s]</code> - <s>删除线效果</s></p>
+            </div>
+
+            <!-- 字体控制 -->
+            <div class="tag-example">
+                <h4>字体控制</h4>
+                <p><code>[size=4][color=red][font=宋体]红色宋体大字[/font][/color][/size]</code> - 组合使用字体大小、颜色和字体</p>
+                <div class="tag-example-preview">
+                    <span style="font-size: 16px; color: red; font-family: '宋体';">红色宋体大字</span>
+                </div>
+                
+                <p><strong>字号说明：</strong></p>
+                <ul>
+                    <li><code>size=1</code> - 超小(10px)</li>
+                    <li><code>size=2</code> - 小(12px)</li>
+                    <li><code>size=3</code> - 偏小(14px)</li>
+                    <li><code>size=4</code> - 中(16px, 默认)</li>
+                    <li><code>size=5</code> - 偏大(18px)</li>
+                    <li><code>size=6</code> - 大(20px)</li>
+                    <li><code>size=7</code> - 超大(24px)</li>
+                </ul>
+            </div>
+
+            <!-- 对齐方式 -->
+            <div class="tag-example">
+                <h4>对齐方式</h4>
+                <p><code>[align=center]居中文字[/align]</code> - 文字居中显示</p>
+                <div class="tag-example-preview" style="text-align: center;">
+                    居中文字
+                </div>
+                <p><code>[align=left]左对齐[/align]</code> - 文字左对齐</p>
+                <p><code>[align=right]右对齐[/align]</code> - 文字右对齐</p>
+            </div>
+
+            <!-- 多媒体内容 -->
+            <div class="tag-example">
+                <h4>多媒体内容</h4>
+                <p><code>[img]https://example.com/image.jpg[/img]</code> - 插入图片</p>
+                <div class="tag-example-preview">
+                    <img src="https://via.placeholder.com/150" style="max-width: 100%;">
+                </div>
+                
+                <p><code>[audio]https://example.com/music.mp3[/audio]</code> - 插入音频</p>
+                <div class="tag-example-preview">
+                    <audio controls style="width:100%; max-width:300px;">
+                        <source src="https://example.com/music.mp3" type="audio/mpeg">
+                        您的浏览器不支持音频元素
+                    </audio>
+                </div>
+            </div>
+
+            <!-- 链接 -->
+            <div class="tag-example">
+                <h4>超链接</h4>
+                <p><code>[url=https://example.com]示例链接[/url]</code> - 创建超链接</p>
+                <div class="tag-example-preview">
+                    <a href="https://example.com" target="_blank">示例链接</a>
+                </div>
+                <p><code>[url]https://example.com[/url]</code> - 直接显示URL链接</p>
+            </div>
+
+            <!-- 特殊内容 -->
+            <div class="tag-example">
+                <h4>特殊内容</h4>
+                <p><code>[code]function test() { return "代码块"; }[/code]</code> - 代码块</p>
+                <div class="code-block">function test() { return "代码块"; }</div>
+                
+                <p><code>[hide]隐藏内容[/hide]</code> - 隐藏内容(需要回复可见)</p>
+                <div class="hidden-content">隐藏内容</div>
+                
+                <p><code>[quote]引用内容[/quote]</code> - 引用文本</p>
+                <div class="tag-example-preview">
+                    <blockquote style="border-left: 3px solid #ccc; padding-left: 10px; margin: 10px 0; color: #666;">
+                        引用内容
+                    </blockquote>
+                </div>
+            </div>
+
+            <!-- 列表和表格 -->
+            <div class="tag-example">
+                <h4>列表和表格</h4>
+                <p><code>[list][*]项目1[*]项目2[/list]</code> - 无序列表</p>
+                <div class="tag-example-preview">
+                    <ul style="margin-left: 20px;">
+                        <li>项目1</li>
+                        <li>项目2</li>
+                    </ul>
+                </div>
+                
+                <p><code>[list=1][*]项目1[*]项目2[/list]</code> - 有序列表</p>
+                <div class="tag-example-preview">
+                    <ol style="margin-left: 20px;">
+                        <li>项目1</li>
+                        <li>项目2</li>
+                    </ol>
+                </div>
+                
+                <p><code>[table][tr][td]单元格1[/td][td]单元格2[/td][/tr][/table]</code> - 表格</p>
+                <div class="tag-example-preview">
+                    <table style="border-collapse: collapse; width: 100%; margin: 10px 0;">
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">单元格1</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">单元格2</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 组合使用示例 -->
+            <div class="tag-example">
+                <h4>组合使用示例</h4>
+                <p><code>[b][color=blue][size=5]重要通知[/size][/color][/b]</code> - 醒目通知</p>
+                <div class="tag-example-preview">
+                    <b><span style="color: blue; font-size: 18px;">重要通知</span></b>
+                </div>
+                
+                <p><code>[align=center][img]https://example.com/logo.png[/img][/align]</code> - 居中图片</p>
+                <p><code>[url=https://example.com][img]https://example.com/link.png[/img][/url]</code> - 图片链接</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主题切换按钮 -->
+    <div class="theme-btn" id="themeBtn">🌓</div>
+
+    <!-- 回退和重做悬浮按钮 -->
+    <div class="floating-btn undo-btn" id="undoBtn">↺</div>
+    <div class="floating-btn redo-btn" id="redoBtn">↻</div>
+
+    <!-- 标签悬浮按钮 -->
+    <div class="floating-btn" id="floatingBtn">★</div>
+
+    <!-- 标签面板 -->
+    <div class="tag-panel" id="tagPanel">
+        <div class="tag-panel-header">
+            <div class="tag-panel-title">常用标签</div>
+            <div class="tag-panel-close" onclick="toggleTagPanel()">×</div>
+        </div>
+        <div class="tag-panel-buttons">
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('b', '粗体文字')">粗体 [b][/b]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('i', '斜体文字')">斜体 [i][/i]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('u', '下划线')">下划线 [u][/u]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('s', '删除线')">删除线 [s][/s]</button>
+
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('url=https://example.com', '链接文字')">链接 [url][/url]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('img', 'https://example.com/image.jpg')">图片 [img][/img]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('code', '代码内容')">代码 [code][/code]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('hide', '隐藏内容')">隐藏 [hide][/hide]</button>
+
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('quote', '引用内容')">引用 [quote][/quote]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('list=1', '[*]项目1[*]项目2')">列表 [list=1][/list]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('table', '[tr][td]单元格[/td][/tr]')">表格 [table][/table]</button>
+            <button class="btn btn-sm tag-panel-btn" onclick="insertTag('audio', '音乐URL')">音频 [audio][/audio]</button>
+        </div>
+    </div>
+
+    <!-- 调色盘弹窗 -->
+<!-- 修改调色盘弹窗结构 -->
+<div class="color-palette-modal" id="colorPaletteModal">
+    <div class="color-palette-container">
+        <div class="color-palette-header">
+            <div class="color-palette-title">选择颜色</div>
+             </div>
+        <div class="color-palette-content" id="colorPaletteContent">
+            <!-- 颜色分类将通过JavaScript动态生成 -->
+        </div>
+        <div class="color-palette-footer">
+            <button class="btn btn-sm" onclick="applySelectedColor()">应用颜色</button>
+            <button class="btn btn-sm btn-outline" onclick="closeColorPalette()">取消</button>
+        </div>
+    </div>
+</div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
