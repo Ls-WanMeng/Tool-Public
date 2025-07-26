@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放器丨挽梦⁡遗酒 提供</title>
+    <style>
+        :root {
+            --main-color: #FF2D55;
+            --bg-color: #000;
+            --text-color: #fff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-color); color: var(--text-color); }
+        
+        .player-container { position: relative; width: 100%; height: 100vh; overflow: hidden; display: none; }
+        #videoElement { width: 100%; height: 100%; object-fit: contain; background: var(--bg-color); }
+        
+        .controls-container {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 12px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7)); transition: opacity 0.3s; z-index: 10;
+        }
+        .controls-row { display: flex; align-items: center; margin-top: 8px; }
+        
+        .progress-container {
+            width: 100%; height: 3px; background: rgba(255,255,255,0.2); border-radius: 3px;
+            position: relative; cursor: pointer;
+        }
+        .progress-bar { height: 100%; background: var(--main-color); border-radius: 3px; width: 0%; }
+        
+        .time-display { font-size: 12px; color: var(--text-color); margin: 0 8px; min-width: 80px; text-align: center; }
+        
+        .control-btn {
+            background: transparent; border: none; color: var(--text-color);
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .control-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .play-pause-btn { color: var(--main-color); }
+        
+        .hint-box {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 15px 25px; border-radius: 10px;
+            font-size: 16px; text-align: center; max-width: 80%; z-index: 20; opacity: 0; transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .hint-box.show { opacity: 1; }
+        .hint-box ul { list-style: none; margin: 10px 0; padding: 0; }
+        .hint-box li { margin: 8px 0; }
+        
+        .loading-spinner {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%; border-top-color: var(--main-color);
+            animation: spin 1s ease-in-out infinite; z-index: 5; display: none;
+        }
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        
+        .volume-slider {
+            width: 80px; height: 3px; -webkit-appearance: none;
+            background: rgba(255,255,255,0.2); border-radius: 3px; outline: none; margin: 0 8px;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 12px; height: 12px;
+            background: var(--main-color); border-radius: 50%; cursor: pointer;
+        }
+        
+        .instruction-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; background-color: var(--bg-color); z-index: 100;
+        }
+        .instruction-container h2 { margin-bottom: 20px; color: var(--main-color); }
+        .instruction-container code {
+            background-color: rgba(255,255,255,0.1); padding: 10px 15px;
+            border-radius: 5px; font-family: monospace; margin: 10px 0; display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="player-container" id="playerContainer">
+        <video id="videoElement" playsinline></video>
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        <div class="hint-box" id="gestureHint"></div>
+        <div class="hint-box" id="gestureInstructions">
+            <h3>手势控制说明</h3>
+            <ul>
+                <li>↔️ 左右滑动 - 快进/快退</li>
+                <li>↕️ 上下滑动 - 调节音量</li>
+                <li>👆 双击 - 播放/暂停</li>
+                <li>⏩ 长按 - 2倍速播放</li>
+            </ul>
+            <p>点击任意位置关闭</p>
+        </div>
+        <div class="controls-container" id="controlsContainer">
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="controls-row">
+                <button class="control-btn play-pause-btn" id="playPauseBtn">
+                    <svg viewBox="0 0 24 24">
+                        <path id="playIcon" d="M8 5v14l11-7z" />
+                    </svg>
+                </button>
+                <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+                <button class="control-btn" id="volumeBtn">
+                    <svg viewBox="0 0 24 24">
+                        <path id="volumeIcon" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                    </svg>
+                </button>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+                <button class="control-btn" id="fullscreenBtn">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="instruction-container" id="instructionContainer">
+        <h2>视频播放器</h2>
+        <p>请使用以下任一方式加载视频：</p>
+        <code>当前网站?type=video&url=视频文件直链</code>
+        <p>或</p>
+        <code>当前网站?type=video&lanzouurl=蓝奏云分享链接</code>
+        <div class="footer-info">
+            <p class="author-credit">作者：挽梦⁡遗酒 &nbsp;&nbsp; &nbsp;&nbsp;
+                <a href="https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt" class="homepage-button">前往主页</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const elements = {
+            player: document.getElementById('playerContainer'),
+            instruction: document.getElementById('instructionContainer'),
+            video: document.getElementById('videoElement'),
+            playBtn: document.getElementById('playPauseBtn'),
+            playIcon: document.getElementById('playIcon'),
+            timeDisplay: document.getElementById('timeDisplay'),
+            progressBar: document.getElementById('progressBar'),
+            volumeBtn: document.getElementById('volumeBtn'),
+            volumeIcon: document.getElementById('volumeIcon'),
+            volumeSlider: document.getElementById('volumeSlider'),
+            fullscreenBtn: document.getElementById('fullscreenBtn'),
+            controls: document.getElementById('controlsContainer'),
+            spinner: document.getElementById('loadingSpinner'),
+            hint: document.getElementById('gestureHint'),
+            instructions: document.getElementById('gestureInstructions')
+        };
+        
+        // 状态变量
+        const state = {
+            touchStartX: 0,
+            touchStartY: 0,
+            isLeftSide: false,
+            isRightSide: false,
+            currentOperation: null,
+            longPressTimer: null,
+            controlsVisible: true,
+            lastDoubleTapTime: 0,
+            controlsTimeout: null
+        };
+        
+        // 工具函数
+        const utils = {
+            formatTime: seconds => {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            },
+            showHint: (element, text, duration = 2000) => {
+                element.textContent = text;
+                element.classList.add('show');
+                clearTimeout(element.hideTimer);
+                element.hideTimer = setTimeout(() => element.classList.remove('show'), duration);
+            },
+            showControls: () => {
+                if (!state.controlsVisible) {
+                    state.controlsVisible = true;
+                    elements.controls.style.opacity = '1';
+                }
+                clearTimeout(state.controlsTimeout);
+                state.controlsTimeout = setTimeout(() => {
+                    elements.controls.style.opacity = '0';
+                    state.controlsVisible = false;
+                }, 1000);
+            }
+        };
+        
+        // 视频控制
+        const videoControls = {
+            togglePlayPause: () => {
+                if (elements.video.paused) {
+                    elements.video.play();
+                    elements.playIcon.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+                } else {
+                    elements.video.pause();
+                    elements.playIcon.setAttribute('d', 'M8 5v14l11-7z');
+                }
+                utils.showControls();
+            },
+            updateVolumeIcon: () => {
+                if (elements.video.muted || elements.video.volume === 0) {
+                    elements.volumeIcon.setAttribute('d', 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zm-13-.5c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z');
+                } else if (elements.video.volume < 0.5) {
+                    elements.volumeIcon.setAttribute('d', 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z');
+                } else {
+                    elements.volumeIcon.setAttribute('d', 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z');
+                }
+            },
+            showInstructions: () => {
+                elements.instructions.classList.add('show');
+                document.addEventListener('click', () => elements.instructions.classList.remove('show'), { once: true });
+                setTimeout(() => elements.instructions.classList.remove('show'), 5000);
+            }
+        };
+        
+        // 事件监听
+        const setupEventListeners = () => {
+            // 播放控制
+            elements.playBtn.addEventListener('click', videoControls.togglePlayPause);
+            elements.video.addEventListener('timeupdate', () => {
+                elements.timeDisplay.textContent = `${utils.formatTime(elements.video.currentTime)} / ${utils.formatTime(elements.video.duration)}`;
+                if (state.currentOperation !== 'seek') {
+                    elements.progressBar.style.width = `${(elements.video.currentTime / elements.video.duration) * 100}%`;
+                }
+            });
+            
+            // 进度条
+            document.getElementById('progressContainer').addEventListener('click', e => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                elements.video.currentTime = (e.clientX - rect.left) / rect.width * elements.video.duration;
+                utils.showControls();
+            });
+            
+            // 音量控制
+            elements.volumeSlider.addEventListener('input', () => {
+                elements.video.volume = elements.volumeSlider.value;
+                videoControls.updateVolumeIcon();
+                utils.showControls();
+            });
+            elements.volumeBtn.addEventListener('click', () => {
+                elements.video.muted = !elements.video.muted;
+                elements.volumeSlider.value = elements.video.muted ? 0 : elements.video.volume;
+                videoControls.updateVolumeIcon();
+                utils.showControls();
+            });
+            
+            // 全屏
+            elements.fullscreenBtn.addEventListener('click', () => {
+                !document.fullscreenElement ? elements.player.requestFullscreen() : document.exitFullscreen();
+                utils.showControls();
+            });
+            
+            // 手势控制
+            document.addEventListener('touchstart', e => {
+                state.currentOperation = null;
+                state.touchStartX = e.touches[0].clientX;
+                state.touchStartY = e.touches[0].clientY;
+                
+                const windowWidth = window.innerWidth;
+                state.isLeftSide = state.touchStartX < windowWidth / 3;
+                state.isRightSide = state.touchStartX > windowWidth * 2 / 3;
+                
+                state.longPressTimer = setTimeout(() => {
+                    if (!state.currentOperation) {
+                        state.currentOperation = 'fastforward';
+                        elements.video.playbackRate = 2.0;
+                        utils.showHint(elements.hint, "快进: 2.0x");
+                    }
+                }, 800);
+                
+                utils.showControls();
+            });
+            
+            document.addEventListener('touchmove', e => {
+                if (state.longPressTimer) {
+                    clearTimeout(state.longPressTimer);
+                    state.longPressTimer = null;
+                }
+                
+                if (state.currentOperation === 'fastforward') return;
+                
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - state.touchStartX;
+                const deltaY = state.touchStartY - touch.clientY;
+                
+                if (!state.currentOperation) {
+                    if (Math.abs(deltaX) > 15) {
+                        state.currentOperation = 'seek';
+                    } else if (Math.abs(deltaY) > 15) {
+                        state.currentOperation = touch.clientX > window.innerWidth / 2 ? 'volume_up' : 'volume_down';
+                        utils.showHint(elements.hint, state.currentOperation === 'volume_up' ? "音量 +" : "音量 -");
+                    }
+                }
+                
+                if (state.currentOperation === 'seek') {
+                    const newTime = Math.max(0, Math.min(elements.video.duration, 
+                        elements.video.currentTime + deltaX / window.innerWidth * elements.video.duration * 0.6));
+                    elements.video.currentTime = newTime;
+                    elements.progressBar.style.width = `${(newTime / elements.video.duration) * 100}%`;
+                    state.touchStartX = touch.clientX;
+                    utils.showHint(elements.hint, utils.formatTime(newTime));
+                    e.preventDefault();
+                } else if (state.currentOperation === 'volume_up' || state.currentOperation === 'volume_down') {
+                    const volumeChange = Math.abs(deltaY) / 500;
+                    const newVolume = state.currentOperation === 'volume_up' 
+                        ? Math.min(1, elements.video.volume + volumeChange) 
+                        : Math.max(0, elements.video.volume - volumeChange);
+                    elements.video.volume = newVolume;
+                    elements.volumeSlider.value = newVolume;
+                    videoControls.updateVolumeIcon();
+                    utils.showHint(elements.hint, `音量: ${Math.round(newVolume * 100)}%`);
+                    state.touchStartY = touch.clientY;
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (state.longPressTimer) clearTimeout(state.longPressTimer);
+                if (state.currentOperation === 'fastforward') {
+                    elements.video.playbackRate = 1.0;
+                    utils.showHint(elements.hint, "恢复正常速度");
+                }
+                state.currentOperation = null;
+            });
+            
+            // 双击控制
+            document.addEventListener('touchend', e => {
+                const currentTime = Date.now();
+                if (currentTime - state.lastDoubleTapTime < 300 && state.currentOperation === null) {
+                    videoControls.togglePlayPause();
+                    state.lastDoubleTapTime = 0;
+                } else {
+                    state.lastDoubleTapTime = currentTime;
+                }
+            });
+            
+            // 视频事件
+            elements.video.addEventListener('pause', () => utils.showHint(elements.hint, "双击播放"));
+            elements.video.addEventListener('error', e => {
+                console.error('视频加载错误:', e);
+                elements.spinner.style.display = 'none';
+                utils.showHint(elements.hint, '视频加载失败');
+            });
+            elements.video.addEventListener('waiting', () => elements.spinner.style.display = 'block');
+            elements.video.addEventListener('playing', () => elements.spinner.style.display = 'none');
+        };
+        
+        // 初始化
+                    }/ 初始化
+        const init = async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const videoUrl = urlParams.get('type') === 'video' ? 
+                (urlParams.get('url') ? decodeURIComponent(urlParams.get('url')) : 
+                 await parseLanzouUrl(decodeURIComponent(urlParams.get('lanzouurl')))) : null;
+            
+            if (videoUrl) {
+                elements.player.style.display = 'block';
+                elements.instruction.style.display = 'none';
+                elements.spinner.style.display = 'block';
+                elements.video.src = videoUrl;
+                
+                elements.video.addEventListener('loadedmetadata', () => {
+                    elements.spinner.style.display = 'none';
+                    elements.video.muted = true;
+                    elements.video.play()
+                        .then(() => {
+                            elements.video.muted = false;
+                            videoControls.showInstructions();
+                        })
+                        .catch(e => console.log('自动播放被阻止:', e));
+                });
+            }
+            
+            setupEventListeners();
+            if (videoUrl) {
+                document.addEventListener('mousemove', utils.showControls);
+            }
+        };
+        
+        // 显示控制条
+        document.addEventListener('mousemove', utils.showControls);
+            } else {
+        // 没有有效视频链接时，显示 instructionContainer
+        elements.player.style.display = 'none';
+        elements.instruction.style.display = 'block';
+            }
+            
+            setupEventListeners();
+        };
+        
+        
+        // 显示控制条
+        document.addEventListener('mousemove', utils.showControls);
+            } else {
+        // 没有有效视频链接时，显示 instructionContainer
+        elements.player.style.display = 'none';
+        elements.instruction.style.display = 'block';
+            }
+            
+            setupEventListeners();
+        };
+        
+        
+        // 蓝奏云解析
+        // 蓝奏云解析
+        async function parseLanzouUrl(url) {
+            try {
+        elements.spinner.style.display = 'block';
+        utils.showHint(elements.hint, '正在解析蓝奏云链接...');
+        
+        // 尝试第一个API
+        const response1 = await fetch(`https://api.kxzjoker.cn/api/lanzou?&url=${encodeURIComponent(url)}`);
+        const data1 = await response1.json();
+        if (data1.code === 200 && data1.downUrl) {
+            utils.showHint(elements.hint, '解析成功，开始加载视频');
+            return data1.downUrl;
+        }
+        
+        // 第一个API失败时尝试备用API
+        const response2 = await fetch(`https://api.bugpk.com/api/lanzou?url=${encodeURIComponent(url)}`);
+        const data2 = await response2.json();
+        if (data2.code === 200 && data2.data && data2.data.url) {
+            utils.showHint(elements.hint, '解析成功，开始加载视频');
+            return data2.data.url;
+        } else {
+            utils.showHint(elements.hint, '解析失败: ' + (data1.msg || data2.msg || '未知错误'));
+            return null;
+        }
+            } catch (error) {
+        console.error('蓝奏云解析错误:', error);
+        utils.showHint(elements.hint, '解析出错: ' + error.message);
+        return null;
+            } finally {
+        elements.spinner.style.display = 'none';
+            }
+        }
+        
+        
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+
+</html>
