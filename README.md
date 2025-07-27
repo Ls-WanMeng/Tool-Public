@@ -1,7 +1,11 @@
 
 # 静态API-播放器
 
-一个基于Web的轻量级视频/图片播放器，支持URL参数加载、蓝奏云链接解析和手势控制。
+一个基于Web的轻量级视频/图片播放器，支持URL参数加载、蓝奏云链接解析和手势控制。  
+
+
+- 在线演示地址: [点击传送](https://ls-wanmeng.github.io/VideoPlayer/Home)
+
 
 ## ✨ 功能特性
 
@@ -48,6 +52,54 @@
 ## 💡 手势控制
 
 - **左右滑动**：快进/快退
+- **上下滑动**：调节音量（左侧区域降低，右侧区域升高）
+- **双击**：播放/暂停
+- **长按**：2倍速播放
+
+## 🛠️ 开发与部署
+
+### 本地开发
+
+1. 克隆仓库：
+
+bash
+
+git clone "https://github.com/your-repo/static-api-player.git" (https://github.com/your-repo/static-api-player.git)
+
+
+2. 启动本地服务器：
+
+bash
+
+使用Python内置服务器
+
+python -m http.server 8000
+
+
+### 部署到服务器
+
+将 `index.html` 上传到静态网站托管服务：
+- GitHub Pages
+- Netlify
+- Vercel
+- 传统Web服务器
+
+## 📝 开源协议
+
+本项目采用 [MIT License](LICENSE) 开源协议。
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request！
+
+## 📧 联系作者
+
+- 主页: [挽梦遗酒的主页](https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt)
+- GitHub: [@Ls-WanMeng](https://github.com/Ls-WanMeng)
+
+<p align="center">
+<sub>由 <a href="https://github.com/Ls-WanMeng">挽梦遗酒</a> 创建与维护</sub>
+</p>
 - **上下滑动**：调节音量（左侧区域降低，右侧区域升高）
 - **双击**：播放/暂停
 - **长按**：2倍速播放
