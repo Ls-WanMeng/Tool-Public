@@ -1,5 +1,9 @@
 项目：在线视频播放器
+
+
 作者：挽梦遗酒
+
+
 主页：
 https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt
 
@@ -9,3 +13,8 @@ https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt
 
 所以新增功能：
       上传到蓝奏云的文件解析成直链后进行播放操作
+
+
+在线预览：
+
+https://ls-wanmeng.github.io/VideoPlayer/Home
