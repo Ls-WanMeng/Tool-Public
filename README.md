@@ -5,8 +5,8 @@
 
 
 * 在线演示地址:  
-   [Gitub本站托管](https://ls-wanmeng.github.io/VideoPlayer/Home)  
-   [国内流畅](https://videoplayer-online.netlify.app/)  
+   [Gitub本站托管](https://ls-wanmeng.github.io/tool/VideoPlayer/Home)  
+   [国内流畅](https://onlineplayer.netlify.app/)  
 
 ## ✨ 功能特性
 
@@ -95,7 +95,7 @@ python -m http.server 8000
 
 ## 📧 联系作者
 
-- 主页: [挽梦遗酒的主页](https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt)
+- 主页: [挽梦遗酒的主页](https://wmyjnetlify.app/)
 - GitHub: [@Ls-WanMeng](https://github.com/Ls-WanMeng)
 
 <p align="center">
@@ -143,9 +143,8 @@ python -m http.server 8000
 
 ## 📧 联系作者
 
-- 主页: [挽梦遗酒的主页](https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt)
+- 主页: [挽梦遗酒的主页](https://wmyj.netlify.app/)
 - GitHub: [@Ls-WanMeng](https://github.com/Ls-WanMeng)
-- 在线演示地址: [点击传送](https://ls-wanmeng.github.io/VideoPlayer/Home)
 
 <p align="center">
 <sub>由 <a href="https://github.com/Ls-WanMeng">挽梦遗酒</a> 创建与维护</sub>
