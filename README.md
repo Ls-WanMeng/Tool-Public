@@ -6,7 +6,7 @@
 
 * 在线演示地址:  
    [Gitub本站托管](https://ls-wanmeng.github.io/tool/VideoPlayer/Home)  
-   [国内流畅](https://onlineplayer.netlify.app/)  
+   [国内流畅](https://videoplayer-wm.netlify.app/)  
 
 ## ✨ 功能特性
 
