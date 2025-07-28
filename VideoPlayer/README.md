@@ -5,7 +5,7 @@
 
 
 * 在线演示地址:  
-   [Gitub本站托管](https://ls-wanmeng.github.io/tool/VideoPlayer/Home)  
+   [Gitub本站托管](https://ls-wanmeng.github.io/Tool/VideoPlayer/Home.html)  
    [国内流畅](https://videoplayer-wm.netlify.app/)  
 
 ## ✨ 功能特性
@@ -210,7 +210,7 @@ python -m http.server 8000
 
 ## 📧 联系作者
 
-- 主页: [挽梦遗酒的主页](https://f.wps.cn/ksform/w/write/Z1gwVE3I#routePromt)
+- 主页: [挽梦遗酒的主页](https://wmyj.netlify.app/)
 - GitHub: [@Ls-WanMeng](https://github.com/Ls-WanMeng)
 
 <p align="center">
