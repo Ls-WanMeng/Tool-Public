@@ -4,8 +4,9 @@
 一个基于Web的轻量级视频/图片播放器，支持URL参数加载、蓝奏云链接解析和手势控制。  
 
 
-- 在线演示地址: [点击传送](https://ls-wanmeng.github.io/VideoPlayer/Home)
-
+* 在线演示地址:  
+   [Gitub本站托管](https://ls-wanmeng.github.io/VideoPlayer/Home)  
+   [国内流畅](https://videoplayer-online.netlify.app/)  
 
 ## ✨ 功能特性
 
