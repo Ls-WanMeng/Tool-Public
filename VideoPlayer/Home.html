@@ -398,96 +398,109 @@
     </div>
 
     <script>
-        // ======================
-        // 1. DOM元素获取
-        // ======================
-        const playerContainer = document.getElementById('playerContainer');
-        const instructionContainer = document.getElementById('instructionContainer');
-        const videoElement = document.getElementById('videoElement');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const playIcon = document.getElementById('playIcon');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressBar = document.getElementById('progressBar');
-        const volumeBtn = document.getElementById('volumeBtn');
-        const volumeIcon = document.getElementById('volumeIcon');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const controlsContainer = document.getElementById('controlsContainer');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const gestureHint = document.getElementById('gestureHint');
-        const gestureInstructions = document.getElementById('gestureInstructions');
-        const urlInput = document.getElementById('urlInput');
-        const encodeBtn = document.getElementById('encodeBtn');
-        const decodeBtn = document.getElementById('decodeBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        
-        // ======================
-        // 2. 全局变量声明
-        // ======================
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let isLeftSide = false;
-        let isRightSide = false;
-        let currentOperation = null; // 'seek'|'volume_up'|'volume_down'|'fastforward'
-        let longPressTimer = null;
-        let controlsVisible = true;
-        let isImageMode = false;
-        let lastDoubleTapTime = 0;
-        let controlsTimeout;
-        let titleInterval;
-        
-               // ======================
-        // 3. 缓存系统
-        // ======================
-        const linkCache = {
-            get: function(url) {
-        const cached = localStorage.getItem(`cache_${encodeURIComponent(url)}`);
-        if (!cached) return null;
-        
-        try {
-            const { data, timestamp } = JSON.parse(cached);
-            // 检查是否超过2天（172800000毫秒）
-            if (Date.now() - timestamp < 172800000) {
-                return data;
+    // ======================
+    // 1. DOM元素获取
+    // ======================
+    const playerContainer = document.getElementById('playerContainer');
+    const instructionContainer = document.getElementById('instructionContainer');
+    const videoElement = document.getElementById('videoElement');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const volumeBtn = document.getElementById('volumeBtn');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const controlsContainer = document.getElementById('controlsContainer');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const gestureHint = document.getElementById('gestureHint');
+    const gestureInstructions = document.getElementById('gestureInstructions');
+    const urlInput = document.getElementById('urlInput');
+    const encodeBtn = document.getElementById('encodeBtn');
+    const decodeBtn = document.getElementById('decodeBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    // ======================
+    // 2. 全局变量声明
+    // ======================
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isLeftSide = false;
+    let isRightSide = false;
+    let currentOperation = null; // 'seek'|'volume_up'|'volume_down'|'fastforward'
+    let longPressTimer = null;
+    let controlsVisible = true;
+    let isImageMode = false;
+    let lastDoubleTapTime = 0;
+    let controlsTimeout;
+    let titleInterval;
+    let retryCount = 0;
+    const MAX_RETRY = 2;
+
+    // ======================
+    // 3. 缓存系统（增强版）
+    // ======================
+    const linkCache = {
+        get: function(url) {
+            const cached = localStorage.getItem(`cache_${encodeURIComponent(url)}`);
+            if (!cached) return null;
+            
+            try {
+                const { data, timestamp } = JSON.parse(cached);
+                // 检查是否超过2天（172800000毫秒）
+                if (Date.now() - timestamp < 172800000) {
+                    return data;
+                }
+                localStorage.removeItem(`cache_${encodeURIComponent(url)}`);
+            } catch (e) {
+                console.error('缓存解析错误:', e);
             }
-            localStorage.removeItem(`cache_${encodeURIComponent(url)}`);
-        } catch (e) {
-            console.error('缓存解析错误:', e);
-        }
-        return null;
-            },
-            
-            set: function(url, data) {
-        const cacheData = { data, timestamp: Date.now() };
-        localStorage.setItem(`cache_${encodeURIComponent(url)}`, JSON.stringify(cacheData));
-            },
-            
-            clearExpired: function() {
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('cache_')) {
-                try {
-                    const cached = JSON.parse(localStorage.getItem(key));
-                    // 超过2天的缓存将被清除
-                    if (Date.now() - cached.timestamp >= 172800000) {
+            return null;
+        },
+        
+        set: function(url, data) {
+            const cacheData = { data, timestamp: Date.now() };
+            localStorage.setItem(`cache_${encodeURIComponent(url)}`, JSON.stringify(cacheData));
+        },
+        
+        clearExpired: function() {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('cache_')) {
+                    try {
+                        const cached = JSON.parse(localStorage.getItem(key));
+                        // 超过2天的缓存将被清除
+                        if (Date.now() - cached.timestamp >= 172800000) {
+                            localStorage.removeItem(key);
+                        }
+                    } catch (e) {
                         localStorage.removeItem(key);
                     }
-                } catch (e) {
-                    localStorage.removeItem(key);
                 }
+            });
+        },
+        
+        checkUrlValidity: async function(url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'HEAD',
+                    mode: 'no-cors',
+                    cache: 'no-store'
+                });
+                return true; // no-cors模式下无法读取状态，假设成功
+            } catch (e) {
+                console.log('URL有效性检查失败:', e);
+                return false;
             }
-        });
-            }
-        };
-        
-        
-        
-        
-        // ======================
-        // 4. API配置
-        // ======================
-        const LANZOU_API_LIST = [
+        }
+    };
+
+    // ======================
+    // 4. API配置
+    // ======================
+    const LANZOU_API_LIST = [
         {
             name: "bugpk",
             url: (url) => `https://api.bugpk.com/api/lanzou?url=${encodeURIComponent(url)}`,
@@ -503,27 +516,27 @@
             url: (url) => `https://api.kxzjoker.cn/api/lanzou?&url=${encodeURIComponent(url)}`,
             parser: (data) => data.code === 200 ? data.downUrl : null,
         }
-        ];
-        
-        // ======================
-        // 5. 工具函数
-        // ======================
-        function formatTime(seconds) {
+    ];
+    
+    // ======================
+    // 5. 工具函数
+    // ======================
+    function formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        
-        function showGestureHint(text) {
+    }
+    
+    function showGestureHint(text) {
         gestureHint.textContent = text;
         gestureHint.style.opacity = '1';
         clearTimeout(gestureHint.hideTimer);
         gestureHint.hideTimer = setTimeout(() => {
             gestureHint.style.opacity = '0';
         }, 1000);
-        }
-        
-        function updateVolumeIcon() {
+    }
+    
+    function updateVolumeIcon() {
         if (videoElement.muted || videoElement.volume === 0) {
             volumeIcon.setAttribute('d', 'M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zm-13-.5c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z');
         } else if (videoElement.volume < 0.5) {
@@ -531,9 +544,9 @@
         } else {
             volumeIcon.setAttribute('d', 'M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z');
         }
-        }
-        
-        function showControls() {
+    }
+    
+    function showControls() {
         if (isImageMode) return;
         
         if (!controlsVisible) {
@@ -541,82 +554,127 @@
             controlsContainer.style.opacity = '1';
         }
         hideControlsAfterDelay();
-        }
-        
-        function hideControlsAfterDelay() {
+    }
+    
+    function hideControlsAfterDelay() {
         clearTimeout(controlsTimeout);
         controlsTimeout = setTimeout(() => {
             controlsContainer.style.opacity = '0';
             controlsVisible = false;
         }, 1000);
-        }
+    }
+    
+    // 浏览器标题交替显示函数
+    function startTitleAnimation(customName) {
+        const defaultTitle = "静态API-播放器丨挽梦⁡遗酒 提供";
+        let showDefault = true;
         
-        // 浏览器标题交替显示函数
-        function startTitleAnimation(customName) {
-            const defaultTitle = "静态API-播放器丨挽梦⁡遗酒 提供";
-            let showDefault = true;
+        // 先显示默认标题
+        document.title = defaultTitle;
+        
+        titleInterval = setInterval(() => {
+            if (showDefault) {
+                document.title = customName;
+            } else {
+                document.title = defaultTitle;
+            }
+            showDefault = !showDefault;
+        }, 2001); // 2.001秒切换一次
+    }
+
+    // ======================
+    // 6. 核心功能函数（增强版）
+    // ======================
+    async function parseLanzouUrl(lanzouUrl) {
+        try {
+            loadingSpinner.style.display = 'block';
+            showGestureHint('正在解析链接...');
             
-            // 先显示默认标题
-            document.title = defaultTitle;
+            // 1. 优先检查缓存
+            const cached = linkCache.get(lanzouUrl);
+            if (cached) {
+                // 验证缓存URL是否仍然有效
+                const isValid = await linkCache.checkUrlValidity(cached);
+                if (isValid) {
+                    showGestureHint('使用缓存数据');
+                    return cached;
+                }
+                // 缓存无效则清除
+                localStorage.removeItem(`cache_${encodeURIComponent(lanzouUrl)}`);
+            }
             
-            titleInterval = setInterval(() => {
-                if (showDefault) {
-                    document.title = customName;
-                } else {
-                    document.title = defaultTitle;
-                }
-                showDefault = !showDefault;
-            }, 2001); // 2.001秒切换一次
+            // 2. 创建带超时的Promise.race竞赛
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('API响应超时')), 5000));
+            
+            const apiPromises = LANZOU_API_LIST.map(api => 
+                Promise.race([
+                    fetch(api.url(lanzouUrl)).then(r => r.json()),
+                    timeoutPromise
+                ]).then(data => {
+                    const result = api.parser(data);
+                    if (result) {
+                        // 立即缓存第一个有效结果
+                        linkCache.set(lanzouUrl, result);
+                        return result;
+                    }
+                    throw new Error('无效响应');
+                })
+            );
+            
+            // 3. 使用Promise.any获取最快成功结果
+            const fileUrl = await Promise.any(apiPromises);
+            return fileUrl;
+            
+        } catch (error) {
+            console.error('解析错误:', error);
+            showGestureHint('解析出错: ' + error.message);
+            return null;
+        } finally {
+            loadingSpinner.style.display = 'none';
         }
-           // ======================
-        // 6. 核心功能函数
-        // ======================
-        async function parseLanzouUrl(lanzouUrl) {
-            try {
-        loadingSpinner.style.display = 'block';
-        showGestureHint('正在解析链接...');
-        
-        // 1. 优先检查缓存
-        const cached = linkCache.get(lanzouUrl);
-        if (cached) {
-            showGestureHint('使用缓存数据');
-            return cached;
-        }
-        
-        // 2. 创建带超时的Promise.race竞赛
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('API响应超时')), 5000));
-        
-        const apiPromises = LANZOU_API_LIST.map(api => 
-            Promise.race([
-                fetch(api.url(lanzouUrl)).then(r => r.json()),
-                timeoutPromise
-            ]).then(data => {
-                const result = api.parser(data);
-                if (result) {
-                    // 立即缓存第一个有效结果
-                    linkCache.set(lanzouUrl, result);
-                    return result;
-                }
-                throw new Error('无效响应');
-            })
-        );
-        
-        // 3. 使用Promise.any获取最快成功结果
-        const fileUrl = await Promise.any(apiPromises);
-        return fileUrl;
-        
-            } catch (error) {
-        console.error('解析错误:', error);
-        showGestureHint('解析出错: ' + error.message);
-        return null;
-            } finally {
+    }
+    
+    async function handleVideoError(e) {
+        console.error('视频加载错误:', e);
         loadingSpinner.style.display = 'none';
+        
+        // 检查是否是蓝奏云链接
+        const urlParams = new URLSearchParams(window.location.search);
+        const lanzouUrl = urlParams.get('lanzouwmurl');
+        
+        if (lanzouUrl && retryCount < MAX_RETRY) {
+            retryCount++;
+            showGestureHint(`链接失效，尝试重新获取(${retryCount}/${MAX_RETRY})...`);
+            
+            // 清除旧缓存
+            localStorage.removeItem(`cache_${encodeURIComponent(lanzouUrl)}`);
+            
+            // 延迟1秒后重新获取
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 重新获取直链
+            const newUrl = await parseLanzouUrl(lanzouUrl);
+            
+            if (newUrl) {
+                // 重新加载视频
+                videoElement.src = newUrl;
+                try {
+                    await videoElement.play();
+                    retryCount = 0; // 重置重试计数器
+                    return;
+                } catch (playError) {
+                    console.error('播放失败:', playError);
+                }
             }
         }
         
-        
-        async function getMediaUrlFromParams() {
+        // 所有尝试失败后显示错误
+        showGestureHint('视频加载失败，请检查链接');
+        retryCount = 0;
+    }
+    
+    async function getMediaUrlFromParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const type = urlParams.get('type');
         let mediaUrl = urlParams.get('wmurl');
@@ -657,9 +715,9 @@
             return await parseLanzouUrl(lanzouUrl);
         }
         return null;
-        }
-        
-        function showGestureInstructions() {
+    }
+    
+    function showGestureInstructions() {
         gestureInstructions.classList.add('show');
         
         // 点击任意位置关闭说明
@@ -672,9 +730,9 @@
         setTimeout(() => {
             gestureInstructions.classList.remove('show');
         }, 5000);
-        }
-        
-        async function initMedia() {
+    }
+    
+    async function initMedia() {
         // 先显示播放器容器，隐藏指令容器
         playerContainer.style.display = 'block';
         instructionContainer.style.display = 'none';
@@ -703,7 +761,22 @@
             } else {
                 // 视频模式
                 loadingSpinner.style.display = 'block';
-                videoElement.src = mediaUrl;
+                
+                // 先验证URL有效性
+                const isValid = await linkCache.checkUrlValidity(mediaUrl);
+                if (!isValid) {
+                    // 无效则尝试重新获取
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const lanzouUrl = urlParams.get('lanzouwmurl');
+                    if (lanzouUrl) {
+                        const newUrl = await parseLanzouUrl(lanzouUrl);
+                        if (newUrl) {
+                            videoElement.src = newUrl;
+                        }
+                    }
+                } else {
+                    videoElement.src = mediaUrl;
+                }
                 
                 videoElement.addEventListener('loadedmetadata', () => {
                     loadingSpinner.style.display = 'none';
@@ -723,11 +796,7 @@
                     }, 2000);
                 });
                 
-                videoElement.addEventListener('error', (e) => {
-                    console.error('视频加载错误:', e);
-                    loadingSpinner.style.display = 'none';
-                    showGestureHint('视频加载失败');
-                });
+                videoElement.addEventListener('error', handleVideoError);
                 
                 videoElement.addEventListener('waiting', () => loadingSpinner.style.display = 'block');
                 videoElement.addEventListener('playing', () => loadingSpinner.style.display = 'none');
@@ -736,9 +805,9 @@
             playerContainer.style.display = 'none';
             instructionContainer.style.display = 'flex';
         }
-        }
-        
-        function togglePlayPause() {
+    }
+    
+    function togglePlayPause() {
         if (videoElement.paused) {
             videoElement.play();
             playIcon.setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
@@ -747,13 +816,13 @@
             playIcon.setAttribute('d', 'M8 5v14l11-7z');
         }
         showControls();
-        }
-        
-        // ======================
-        // 7. 事件监听器
-        // ======================
-        // URL工具相关事件
-        encodeBtn.addEventListener('click', function() {
+    }
+    
+    // ======================
+    // 7. 事件监听器
+    // ======================
+    // URL工具相关事件
+    encodeBtn.addEventListener('click', function() {
         try {
             const originalText = urlInput.value.trim();
             if (!originalText) {
@@ -764,9 +833,9 @@
         } catch (e) {
             alert('编码出错: ' + e.message);
         }
-        });
-        
-        decodeBtn.addEventListener('click', function() {
+    });
+    
+    decodeBtn.addEventListener('click', function() {
         try {
             const encodedText = urlInput.value.trim();
             if (!encodedText) {
@@ -777,9 +846,9 @@
         } catch (e) {
             alert('解码出错: ' + e.message);
         }
-        });
-        
-        copyBtn.addEventListener('click', function() {
+    });
+    
+    copyBtn.addEventListener('click', function() {
         if (!urlInput.value.trim()) {
             alert('没有内容可复制');
             return;
@@ -787,29 +856,29 @@
         urlInput.select();
         document.execCommand('copy');
         alert('已复制到剪贴板');
-        });
-        
-        clearBtn.addEventListener('click', function() {
+    });
+    
+    clearBtn.addEventListener('click', function() {
         urlInput.value = '';
-        });
-        
-        // 播放器控制相关事件
-        playPauseBtn.addEventListener('click', togglePlayPause);
-        
-        progressContainer.addEventListener('click', (e) => {
+    });
+    
+    // 播放器控制相关事件
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    
+    progressContainer.addEventListener('click', (e) => {
         const rect = progressContainer.getBoundingClientRect();
         const pos = (e.clientX - rect.left) / rect.width;
         videoElement.currentTime = pos * videoElement.duration;
         showControls();
-        });
-        
-        volumeSlider.addEventListener('input', () => {
+    });
+    
+    volumeSlider.addEventListener('input', () => {
         videoElement.volume = volumeSlider.value;
         updateVolumeIcon();
         showControls();
-        });
-        
-        volumeBtn.addEventListener('click', () => {
+    });
+    
+    volumeBtn.addEventListener('click', () => {
         videoElement.muted = !videoElement.muted;
         if (videoElement.muted) {
             volumeSlider.value = 0;
@@ -818,19 +887,19 @@
         }
         updateVolumeIcon();
         showControls();
-        });
-        
-        fullscreenBtn.addEventListener('click', () => {
+    });
+    
+    fullscreenBtn.addEventListener('click', () => {
         if (!document.fullscreenElement) {
             playerContainer.requestFullscreen();
         } else {
             document.exitFullscreen();
         }
         showControls();
-        });
-        
-        // 视频元素事件
-        videoElement.addEventListener('timeupdate', () => {
+    });
+    
+    // 视频元素事件
+    videoElement.addEventListener('timeupdate', () => {
         const current = formatTime(videoElement.currentTime);
         const duration = formatTime(videoElement.duration);
         timeDisplay.textContent = `${current} / ${duration}`;
@@ -839,26 +908,10 @@
             const progress = (videoElement.currentTime / videoElement.duration) * 100;
             progressBar.style.width = `${progress}%`;
         }
-        });
-        
-        videoElement.addEventListener('pause', () => {
-        showGestureHint("双击播放");
-        setTimeout(() => {
-            gestureHint.style.opacity = '0';
-        }, 2000);
-        });
-        
-        videoElement.addEventListener('error', (e) => {
-        console.error('视频加载错误:', e);
-        loadingSpinner.style.display = 'none';
-        showGestureHint('视频加载失败');
-        });
-        
-        videoElement.addEventListener('waiting', () => loadingSpinner.style.display = 'block');
-        videoElement.addEventListener('playing', () => loadingSpinner.style.display = 'none');
-        
-        // 手势控制相关事件
-        document.addEventListener('touchstart', (e) => {
+    });
+    
+    // 手势控制相关事件
+    document.addEventListener('touchstart', (e) => {
         if (isImageMode) return;
         
         currentOperation = null;
@@ -878,9 +931,9 @@
         }, 800);
         
         showControls();
-        });
-        
-        document.addEventListener('touchmove', (e) => {
+    });
+    
+    document.addEventListener('touchmove', (e) => {
         if (isImageMode) return;
         
         if (longPressTimer) {
@@ -940,9 +993,9 @@
             touchStartY = touch.clientY;
             e.preventDefault();
         }
-        });
-        
-        document.addEventListener('touchend', () => {
+    });
+    
+    document.addEventListener('touchend', () => {
         if (isImageMode) return;
         
         if (longPressTimer) {
@@ -956,9 +1009,9 @@
         }
         
         currentOperation = null;
-        });
-        
-        document.addEventListener('touchend', (e) => {
+    });
+    
+    document.addEventListener('touchend', (e) => {
         if (isImageMode) return;
         
         const currentTime = Date.now();
@@ -968,12 +1021,12 @@
         } else {
             lastDoubleTapTime = currentTime;
         }
-        });
-        
-        // ======================
-        // 8. 初始化代码
-        // ======================
-        window.addEventListener('DOMContentLoaded', () => {
+    });
+    
+    // ======================
+    // 8. 初始化代码
+    // ======================
+    window.addEventListener('DOMContentLoaded', () => {
         linkCache.clearExpired();
         initMedia();
         
@@ -981,8 +1034,8 @@
             hideControlsAfterDelay();
             document.addEventListener('mousemove', showControls);
         }
-        });
-    </script>
+    });
+</script>
 
 </body>
 
