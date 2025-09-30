@@ -4,7 +4,6 @@
 
 [[redirects]]
 from = "/"
-to = "/.netlify/functions/lanzou?url=:lanzouwmurl&type=:type"
-status = 302
+to = "/.netlify/functions/lanzou?"
+status = 200
 force = true
-query = { lanzouwmurl = ":lanzouwmurl", type = ":type?" }  # 问号表示可选
