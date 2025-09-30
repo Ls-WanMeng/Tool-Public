@@ -1,6 +1,7 @@
 [build]
   publish="html"
   functions = "netlify/functions"
+
 [[redirects]]
   from = "/"
   to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
