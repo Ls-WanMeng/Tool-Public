@@ -114,7 +114,7 @@ async function parseLanzouUrl(originalUrl, password = '') {
 // Netlify函数入口
 exports.handler = async (event) => {
   const params = new URL(event.rawUrl).searchParams;
-  const targetUrl = params.get('url');
+  const targetUrl = params.get('lanzouwmurl');
   const password = params.get('pwd') || '';
   const type = params.get('type') || 'json';
 
