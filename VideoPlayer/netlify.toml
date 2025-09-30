@@ -1,6 +1,6 @@
 [build]
   publish = "."          
-  functions = ".functions"
+  functions = "functions"
 [[redirects]]
   from = "/api/"
   to = "/.functions/lanzou?url="
