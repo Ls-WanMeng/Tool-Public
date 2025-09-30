@@ -5,6 +5,6 @@
 [[redirects]]
   from = "/"
   to = "/.netlify/functions/lanzou"
-  status = 200
+  status = 301
   force = true
   query = { url = ":lanzouwmurl" }
