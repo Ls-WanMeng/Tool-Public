@@ -2,9 +2,9 @@
   publish = "."          # 静态文件目录
   functions = "functions" # 函数目录
 
-# 重定向规则（关键修正）
 [[redirects]]
-  from = "/"     # 匹配 /lanzou/xxx
-  to = "/.netlify/functions/lanzou"  # 传递完整路径
+  from = "/"
+  to = "/.netlify/functions/lanzou?lanzouwmurl=:lanzouwmurl"
   status = 200
   force = true
+  query = { lanzouwmurl = ":lanzouwmurl" }  # 显式传递参数
