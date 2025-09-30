@@ -60,15 +60,21 @@ exports.handler = async function(event, context) {
                 };
             
             case "video":
-                // 直接返回视频流，让浏览器内置播放器处理
-                return {
-                    statusCode: 302,
-                    headers: {
-                        "Location": finalUrl,
-                        "Cache-Control": "no-cache",
-                        "Content-Type": "video/mp4"
-                    }
-                };
+    // 返回超简易HTML视频播放器
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>视频播放</title></head>
+<body style="margin:0;background:#000;">
+<video src="${finalUrl}" controls autoplay style="width:100%;height:100vh;">
+</video>
+</body>
+</html>`;
+    return {
+        statusCode: 200,
+        body: html,
+        headers: {"Content-Type": "text/html"}
+    };
+
             
             case "down":
             default:
