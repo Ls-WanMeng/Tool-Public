@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou"
+  to = "/.netlify/functions/lanzou?url=:url"
   status = 301
   force = true
   query = { url = ":lanzouwmurl" }
