@@ -2,6 +2,8 @@
   publish = "."
   functions = "netlify/functions"
 
+//重定向 参数 lanzouwnurl
+
 [[redirects]]
   from = "/"
   to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
