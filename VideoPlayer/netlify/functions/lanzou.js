@@ -1,8 +1,9 @@
-// lanzou.js - 蓝奏云直链解析 Netlify 函数（格式化JSON输出）
+// lanzou.js - 蓝奏云直链解析 Netlify 函数（支持多种返回格式）
 
 exports.handler = async function(event, context) {
     const url = new URL(event.rawUrl);
     const targetUrl = url.searchParams.get("url");
+    const type = url.searchParams.get("type") || "down";
     
     // 如果没有提供 URL 参数，返回 JSON 格式的使用说明
     if (!targetUrl) {
@@ -13,11 +14,16 @@ exports.handler = async function(event, context) {
                 usage: {
                     description: "蓝奏云直链解析服务",
                     parameters: {
-                        url: "蓝奏云分享链接(必填)"
+                        url: "蓝奏云分享链接(必填)",
+                        type: "返回类型(可选: json/down/txt, 默认down)"
                     },
-                    example: `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx`
+                    examples: [
+                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx`,
+                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=json`,
+                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=txt`
+                    ]
                 }
-            }, null, 2),  // 使用2个空格缩进
+            }, null, 2),
             headers: {
                 "Content-Type": "application/json"
             }
@@ -28,28 +34,50 @@ exports.handler = async function(event, context) {
         // 解析蓝奏云链接
         const finalUrl = await parseLanzouUrl(targetUrl);
 
-        // 返回格式化后的直链信息
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                success: true,
-                original_url: targetUrl,
-                direct_url: finalUrl
-            }, null, 2),  // 使用2个空格缩进
-            headers: {
-                "Content-Type": "application/json"
-            }
-        };
+        // 根据type参数返回不同格式
+        switch (type.toLowerCase()) {
+            case "json":
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({
+                        success: true,
+                        original_url: targetUrl,
+                        direct_url: finalUrl
+                    }, null, 2),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                };
+            
+            case "txt":
+                return {
+                    statusCode: 200,
+                    body: finalUrl,
+                    headers: {
+                        "Content-Type": "text/plain"
+                    }
+                };
+            
+            case "down":
+            default:
+                return {
+                    statusCode: 302,
+                    headers: {
+                        "Location": finalUrl,
+                        "Cache-Control": "no-cache"
+                    }
+                };
+        }
 
     } catch (error) {
-        // 返回格式化后的错误信息
+        // 错误时总是返回JSON格式
         return {
             statusCode: 500,
             body: JSON.stringify({
                 success: false,
                 error: error.message,
                 original_url: targetUrl
-            }, null, 2),  // 使用2个空格缩进
+            }, null, 2),
             headers: {
                 "Content-Type": "application/json"
             }
@@ -97,8 +125,8 @@ async function parseLanzouUrl(targetUrl) {
         const page2Html = await page2Response.text();
 
         // 提取变量
-        const part1Match = page2Html.match(/(?:var\s+)?vkjxld\s*=\s*['"]([^'"]+)/i);
-        const part2Match = page2Html.match(/(?:var\s+)?hyggid\s*=\s*['"]([^'"]+)/i);
+        const part1Match = page2Html.match(/(?:var\s+)?vkjxld\s*=\s*['"]([^'"]+)['"]/i);
+        const part2Match = page2Html.match(/(?:var\s+)?hyggid\s*=\s*['"]([^'"]+)['"]/i);
         
         if (!part1Match || !part2Match) {
             throw new Error("无法提取URL参数");
