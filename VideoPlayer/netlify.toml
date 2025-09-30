@@ -1,10 +1,9 @@
 [build]
    
   functions = "netlify/functions"
-
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
+  to = "/.netlify/functions/lanzou"  # 去掉 ?url=:lanzouwmurl
   status = 301
   force = true
-  
+  query = { url = ":lanzouwmurl" }   # 显式映射参数
