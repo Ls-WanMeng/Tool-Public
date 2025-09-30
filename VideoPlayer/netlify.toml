@@ -2,7 +2,7 @@
   publish = "."          
   functions = ".functions"
 [[redirects]]
-  from = "/"
+  from = "/api/"
   to = "/.functions/lanzou"
   status = 301
   
