@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/"
-  to = "/.example.txt"
+  to = "/.example"
   status = 200
   
