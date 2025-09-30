@@ -8,10 +8,3 @@
   to = "/.netlify/functions/lanzou"  # 传递完整路径
   status = 200
   force = true
-
-# 备用方案：查询参数形式
-[[redirects]]
-  from = "/download"      # 匹配 /download?url=xxx
-  to = "/.netlify/functions/lanzou?lanzouwmurl=:url" 
-  status = 200
-  query = { url = ":url" } # 显式传递查询参数
