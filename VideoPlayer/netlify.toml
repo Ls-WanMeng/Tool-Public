@@ -3,7 +3,7 @@
   functions = "netlify/functions"
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou"  # 去掉 ?url=:lanzouwmurl
+  to = "/.netlify/functions/lanzou"
   status = 301
   force = true
-  query = { url = ":lanzouwmurl" }   # 显式映射参数
+  query = { url = ":lanzouwmurl" } 
