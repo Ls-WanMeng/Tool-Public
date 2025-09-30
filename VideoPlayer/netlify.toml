@@ -5,5 +5,4 @@
   from = "/"
   to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
   status = 200
-  force = true
   query = {lanzouwmurl = ":lanzouwmurl"}
