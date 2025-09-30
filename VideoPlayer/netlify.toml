@@ -3,6 +3,6 @@
   functions = "functions"
 [[redirects]]
   from = "/api/"
-  to = "/.functions/lanzou?url="
+  to = "/.functions/lanzou"
   status = 301
   query={url=":lanzouwmurl"}
