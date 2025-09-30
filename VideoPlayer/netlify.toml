@@ -1,9 +1,9 @@
 [build]
    publish="html"
   functions = "netlify/functions"
-
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou?url=:lanzouurl"
-  status = 302
-  query = {lanzouurl = ":lanzouwmurl"}
+  to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
+  status = 301
+  force = true
+  query = { lanzouurl = ":lanzouwmurl"}
