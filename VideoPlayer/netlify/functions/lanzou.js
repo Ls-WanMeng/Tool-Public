@@ -2,7 +2,7 @@
 
 exports.handler = async function(event, context) {
     const url = new URL(event.rawUrl);
-    const targetUrl = url.searchParams.get("url");
+    const targetUrl = url.searchParams.get("lanzouwmurl");
     const type = url.searchParams.get("type") || "down";
     
     // 如果没有提供 URL 参数，返回 JSON 格式的使用说明
