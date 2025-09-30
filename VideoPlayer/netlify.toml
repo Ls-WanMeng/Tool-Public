@@ -6,6 +6,6 @@
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
+  to = "/.netlify/functions/lanzou.js?url=:lanzouwmurl"
   status = 200
 
