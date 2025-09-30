@@ -1,5 +1,5 @@
 [build]
-  publish = "example.html"          
+  publish = "example"          
   functions = ".functions"
 [[redirects]]
   from = "/"
