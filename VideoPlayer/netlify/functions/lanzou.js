@@ -18,10 +18,10 @@ exports.handler = async function(event, context) {
                         type: "返回类型(可选: json/down/txt/video, 默认down)"
                     },
                     examples: [
-                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx`,
-                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=json`,
-                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=txt`,
-                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=video`
+                        `${url.origin}/.netlify/functions/lanzou?lanzouwmurl=https://wwi.lanzoup.com/xxxxxxxx`,
+                        `${url.origin}/.netlify/functions/lanzou?lanzouwmurl=https://wwi.lanzoup.com/xxxxxxxx&type=json`,
+                        `${url.origin}/.netlify/functions/lanzou?lanzouwmurl=https://wwi.lanzoup.com/xxxxxxxx&type=txt`,
+                        `${url.origin}/.netlify/functions/lanzou?lanzouwmurl=https://wwi.lanzoup.com/xxxxxxxx&type=video`
                     ]
                 }
             }, null, 2),
