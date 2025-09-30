@@ -1,9 +1,9 @@
 [build]
   publish = "."          
-  functions = ".netlify/functions"
+  functions = ".functions"
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou"
+  to = "/.functions/lanzou"
   status = 200
   force = true
  
