@@ -3,7 +3,7 @@
   functions = ".netlify/functions"
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou?lanzouwmurl=:lanzouwmurl"
+  to = "/.netlify/functions/lanzou"
   status = 200
   force = true
-  query = { lanzouwmurl = ":lanzouwmurl" }  # 显式传递参数
+ 
