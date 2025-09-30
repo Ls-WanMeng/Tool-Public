@@ -15,12 +15,13 @@ exports.handler = async function(event, context) {
                     description: "蓝奏云直链解析服务",
                     parameters: {
                         url: "蓝奏云分享链接(必填)",
-                        type: "返回类型(可选: json/down/txt, 默认down)"
+                        type: "返回类型(可选: json/down/txt/video, 默认down)"
                     },
                     examples: [
                         `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx`,
                         `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=json`,
-                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=txt`
+                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=txt`,
+                        `${url.origin}/.netlify/functions/lanzou?url=https://wwi.lanzoup.com/xxxxxxxx&type=video`
                     ]
                 }
             }, null, 2),
@@ -55,6 +56,17 @@ exports.handler = async function(event, context) {
                     body: finalUrl,
                     headers: {
                         "Content-Type": "text/plain"
+                    }
+                };
+            
+            case "video":
+                // 直接返回视频流，让浏览器内置播放器处理
+                return {
+                    statusCode: 302,
+                    headers: {
+                        "Location": finalUrl,
+                        "Cache-Control": "no-cache",
+                        "Content-Type": "video/mp4"
                     }
                 };
             
