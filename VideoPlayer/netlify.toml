@@ -3,7 +3,7 @@
   functions = "netlify/functions"
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou?url=:lanzouwmurl"
+  to = "/.netlify/functions/lanzou.js?url=:lanzouwmurl"
   status = 308
   force = true
   query = { lanzouurl = ":lanzouwmurl"}
