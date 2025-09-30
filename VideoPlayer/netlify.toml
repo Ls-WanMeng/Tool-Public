@@ -6,4 +6,4 @@
   to = "/.netlify/functions/lanzou.js?url=:lanzouwmurl"
   status = 308
   force = true
-  query = { lanzouurl = ":lanzouwmurl"}
+  query = { lanzouwmurl = ":lanzouwmurl"}
