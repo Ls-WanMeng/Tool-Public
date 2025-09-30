@@ -1,9 +1,9 @@
 [build]
   publish = ".example.html"          
   functions = ".netlify/functions"
-
 [[redirects]]
   from = "/"
-  to = "/.example"
+  to = "/.netlify/functions/lanzou?lanzouwmurl=:lanzouwmurl"
   status = 200
-  
+  force = true
+  query = { lanzouwmurl = ":lanzouwmurl" }  # 显式传递参数
