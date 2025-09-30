@@ -1,6 +1,6 @@
 // 使用Node.js原生模块
 const https = require('https');
-const { URL } = require('url');
+const { URL } = require('lanzouwmurl');
 
 // 配置API列表
 const LANZOU_API_LIST = [
