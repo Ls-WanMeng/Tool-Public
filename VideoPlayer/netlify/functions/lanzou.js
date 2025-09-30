@@ -1,6 +1,4 @@
 
-//解析方法来自挽梦遗酒 wmyj.netlify.app
-
 
 const axios = require('axios');
 
