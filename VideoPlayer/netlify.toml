@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou.js"
+  to = "/.example.txt"
   status = 200
   
