@@ -1,7 +1,10 @@
 [build]
+   
   functions = "netlify/functions"
 
 [[redirects]]
   from = "/"
-  to = "/.netlify/functions/lanzou"
+  to = "/.netlify/functions/lanzou?lanzouwmurl=:lanzouwmurl"
   status = 200
+  force = true
+  query = { url = ":lanzouwmurl" }  # 显式传递参数
