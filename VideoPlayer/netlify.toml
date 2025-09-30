@@ -1,0 +1,7 @@
+[build]
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/lanzou"
+  to = "/.netlify/functions/lanzou"
+  status = 200
