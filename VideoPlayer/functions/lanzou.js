@@ -2,7 +2,7 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   const url = new URL(`https://example.com${event.rawUrl}`);
-  const targetUrl = url.searchParams.get("url");
+  const targetUrl = url.searchParams.get("lanzouwmurl");
   const debug = url.searchParams.get("debug");
   
   // 如果没有提供 URL 参数，返回使用说明
