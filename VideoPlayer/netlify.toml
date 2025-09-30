@@ -5,5 +5,4 @@
   from = "/"
   to = "/.functions/lanzou"
   status = 200
-  force = true
- 
+  
