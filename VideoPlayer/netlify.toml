@@ -7,4 +7,4 @@
   to = "/.netlify/functions/lanzou"
   status = 200
   force = true
-  query = { url = ":lanzouwmurl" }  # 显式传递参数
+  query = { url = ":lanzouwmurl" }
