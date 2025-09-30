@@ -2,6 +2,6 @@
   functions = "netlify/functions"
 
 [[redirects]]
-  from = "/api/lanzou"
+  from = "/"
   to = "/.netlify/functions/lanzou"
   status = 200
