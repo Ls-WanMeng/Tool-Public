@@ -17,7 +17,7 @@ exports.handler = async function(event, context) {
                     parameters: {
                         url: "蓝奏云分享链接(必填)",
                         type: "返回类型(可选: json/down/txt/video, 默认down)",
-                        api: "API源(可选: local/api1, 默认随机)"
+                        api: "API源(可选: local/api1/api2/api3, 默认随机)"
                     },
                     examples: [
                         `${url.origin}/.netlify/functions/lanzou?lanzouwmurl=链接2/xxxxxxxx`,
@@ -118,7 +118,7 @@ exports.handler = async function(event, context) {
 
 // 随机选择API进行解析
 async function parseWithRandomAPI(targetUrl) {
-    const apis = ['local', 'api1'];
+    const apis = ['local', 'api1', 'api2', 'api3'];
     const triedApis = [];
     const errors = [];
     
@@ -159,16 +159,19 @@ async function parseWithSelectedAPI(targetUrl, apiSource) {
     switch (apiSource.toLowerCase()) {
         case 'api1':
             return await parseWithAPI1(targetUrl);
+        case 'api2':
+            return await parseWithAPI2(targetUrl);
+        case 'api3':
+            return await parseWithAPI3(targetUrl);
         case 'local':
         default:
             return await parseLanzouUrl(targetUrl);
     }
 }
 
-// API1 外部解析
+// API1 外部解析 - 稳定可靠的解析服务
 async function parseWithAPI1(targetUrl) {
     try {
-        // 使用稳定可靠的外部API进行解析
         const apiUrl = `https://api.oioweb.cn/api/common/lanzou?url=${encodeURIComponent(targetUrl)}`;
         
         const response = await fetch(apiUrl, {
@@ -185,7 +188,6 @@ async function parseWithAPI1(targetUrl) {
         
         const data = await response.json();
         
-        // 根据API的实际返回格式进行调整
         if (data.code === 200 && data.result && data.result.download) {
             return data.result.download;
         }
@@ -193,7 +195,69 @@ async function parseWithAPI1(targetUrl) {
         throw new Error('API1解析失败');
         
     } catch (error) {
-        throw new Error(`外部API解析失败: ${error.message}`);
+        throw new Error(`API1解析失败: ${error.message}`);
+    }
+}
+
+// API2 外部解析 - 另一个可靠的解析服务
+async function parseWithAPI2(targetUrl) {
+    try {
+        const apiUrl = `https://lanzou.xin/parse?url=${encodeURIComponent(targetUrl)}`;
+        
+        const response = await fetch(apiUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 5000
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API2请求失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.code === 0 && data.data && data.data.url) {
+            return data.data.url;
+        }
+        
+        throw new Error('API2解析失败');
+        
+    } catch (error) {
+        throw new Error(`API2解析失败: ${error.message}`);
+    }
+}
+
+// API3 外部解析 - 第三个解析服务
+async function parseWithAPI3(targetUrl) {
+    try {
+        const apiUrl = `https://api.lanzoui.com/v2/parse`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            body: JSON.stringify({ url: targetUrl }),
+            timeout: 5000
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API3请求失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.direct_url) {
+            return data.direct_url;
+        }
+        
+        throw new Error('API3解析失败');
+        
+    } catch (error) {
+        throw new Error(`API3解析失败: ${error.message}`);
     }
 }
 
