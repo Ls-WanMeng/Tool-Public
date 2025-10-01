@@ -167,32 +167,37 @@ async function parseWithSelectedAPI(targetUrl, apiSource) {
 
 // API1 外部解析
 async function parseWithAPI1(targetUrl) {
-    // 使用API1进行解析
-    const apiUrl = `https://api.example.com/lanzou/parse?url=${encodeURIComponent(targetUrl)}`;
-    
-    const response = await fetch(apiUrl, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
-        },
-        timeout: 5000
-    });
-    
-    if (!response.ok) {
-        throw new Error(`API1请求失败: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    // 根据API1的实际返回格式进行调整
-    if ((data.code !== undefined && data.code !== 0) || !data.data || !data.data.url) {
+    try {
+        // 使用稳定可靠的外部API进行解析
+        const apiUrl = `https://api.oioweb.cn/api/common/lanzou?url=${encodeURIComponent(targetUrl)}`;
+        
+        const response = await fetch(apiUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 5000
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API1请求失败: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // 根据API的实际返回格式进行调整
+        if (data.code === 200 && data.result && data.result.download) {
+            return data.result.download;
+        }
+        
         throw new Error('API1解析失败');
+        
+    } catch (error) {
+        throw new Error(`外部API解析失败: ${error.message}`);
     }
-    
-    return data.data.url;
 }
 
-// 原有的内部解析函数（local）
+// 原有的内部解析函数（local）- 保持您最初可用的版本
 async function parseLanzouUrl(targetUrl) {
     try {
         // 1. 获取初始页面内容
@@ -200,8 +205,7 @@ async function parseLanzouUrl(targetUrl) {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36",
                 "Referer": "链接1"
-            },
-            timeout: 5000
+            }
         });
         
         if (!page1Response.ok) {
@@ -223,8 +227,7 @@ async function parseLanzouUrl(targetUrl) {
             headers: {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36",
                 "Referer": targetUrl
-            },
-            timeout: 5000
+            }
         });
         
         if (!page2Response.ok) {
@@ -249,16 +252,4 @@ async function parseLanzouUrl(targetUrl) {
     } catch (error) {
         throw error;
     }
-}
-
-// 简单的fetch超时包装
-function fetchWithTimeout(url, options = {}) {
-    const { timeout = 5000, ...fetchOptions } = options;
-    
-    return Promise.race([
-        fetch(url, fetchOptions),
-        new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('请求超时')), timeout)
-        )
-    ]);
 }
