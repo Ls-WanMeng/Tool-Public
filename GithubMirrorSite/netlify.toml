@@ -1,9 +1,9 @@
 [build]
-  functions = "./"
-  publish="html"
+  functions = "/."
+  publish="/."
 
 [[redirects]]
   from = "/"
-  to = "./GithubMirrorSite?"
+  to = "/.GithubMirrorSite?"
   status = 200
   force = true
