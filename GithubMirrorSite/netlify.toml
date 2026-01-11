@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/"
-  to = "/.GithubMirrorSite?"
+  to = "/.githubnirrorsite?"
   status = 200
   force = true
