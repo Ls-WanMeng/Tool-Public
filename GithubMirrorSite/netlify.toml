@@ -3,7 +3,7 @@
   functions = "functions"
 publish="."
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/.functions/GithubMirrorSite?"
   status = 200
   force = true
