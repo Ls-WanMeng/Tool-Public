@@ -4,6 +4,6 @@
 publish="html"
 [[redirects]]
   from = "/*"
-  to = "./netlify/functions/GithubMirrorSite"
+  to = "./netlify/functions/githubmirrorsite"
   status = 200
   force = true
