@@ -1,9 +1,3 @@
 [build]
   functions = "."
-  publish="."
 
-[[redirects]]
-  from = "/"
-  to = "/.githubnirrorsite?"
-  status = 200
-  force = true
