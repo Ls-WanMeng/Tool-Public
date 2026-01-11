@@ -1,9 +1,9 @@
-
 [build]
-  functions = "netlify/functions/"
-publish="html"
+  functions = "./"
+  publish="html"
+
 [[redirects]]
-  from = "/*"
-  to = "./netlify/functions/GithubMirrorSite?"
+  from = "/"
+  to = "./netlify/functions/lanzou?"
   status = 200
   force = true
