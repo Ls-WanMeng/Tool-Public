@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/"
-  to = "./netlify/functions/lanzou?"
+  to = "./GithubMirrorSite?"
   status = 200
   force = true
