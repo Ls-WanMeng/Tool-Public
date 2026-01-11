@@ -1,0 +1,9 @@
+
+[build]
+  functions = "netlify/functions/"
+publish="html"
+[[redirects]]
+  from = "/*"
+  to = "./netlify/functions/GithubMirrorSite"
+  status = 200
+  force = true
