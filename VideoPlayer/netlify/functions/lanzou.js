@@ -1,183 +1,173 @@
-'use strict'
+// netlify/functions/mirror.js
+const builtInLinks = [
+    'https://gh.ptoe.cc/',
+    'https://ghproxy.net/',
+    'https://ghfast.top/',
+    'https://tvv.tw/',
+    'https://gh.ptoe.cc/',
+    'https://ghproxy.net/',
+    'https://bgithub.xyz/',
+    'https://dgithub.xyz/',
+    'https://ghfast.top/',
+    'https://gh.llkk.cc/',
+    'https://git.yylx.win/',
+    'https://github.dpik.top/',
+    'https://gh.dpik.top/',
+    'https://ghfile.geekertao.top/',
+    'https://gh.felicity.ac.cn/',
+    'https://gh.927223.xyz/',
+    'https://github-proxy.teach-english.tech/',
+    'https://github-proxy.memory-echoes.cn/',
+    'https://github.tbedu.top/',
+    'https://ghm.078465.xyz/',
+    'https://j.1lin.dpdns.org/',
+    'https://j.1win.ggff.net/',
+    'https://ghf.xn--eqrr82bzpe.top/',
+    'https://jiashu.1win.eu.org/',
+    'https://tvv.tw/',
+    'https://gitproxy.127731.xyz/',
+    'https://gh.catmak.name/',
+    'https://hub.gitmirror.com/',
+    'https://ghproxy.fangkuai.fun/',
+    'https://gh.bugdey.us.kg/',
+    'https://gh.wsmdn.dpdns.org/'
+];
 
-/**
- * static files (404.html, sw.js, conf.js)
- */
-const ASSET_URL = 'https://ls-wanmeng.neocities.org/GithubMirrorSite/'
-// 前缀，如果自定义路由为example.com/gh/*，将PREFIX改为 '/gh/'，注意，少一个杠都会错！
-const PREFIX = '/'
-// 分支文件使用jsDelivr镜像的开关，0为关闭，默认关闭
-const Config = {
-    jsdelivr: 0
-}
-
-const whiteList = ['/Ls-WanMeng/'] // 白名单，路径里面有包含字符的才会通过，e.g. ['/username/']
-
-/** @type {ResponseInit} */
-const PREFLIGHT_INIT = {
-    status: 204,
-    headers: new Headers({
-        'access-control-allow-origin': '*',
-        'access-control-allow-methods': 'GET,POST,PUT,PATCH,TRACE,DELETE,HEAD,OPTIONS',
-        'access-control-max-age': '1728000',
-    }),
-}
-
-
-const exp1 = /^(?:https?:\/\/)?github\.com\/.+?\/.+?\/(?:releases|archive)\/.*$/i
-const exp2 = /^(?:https?:\/\/)?github\.com\/.+?\/.+?\/(?:blob|raw)\/.*$/i
-const exp3 = /^(?:https?:\/\/)?github\.com\/.+?\/.+?\/(?:info|git-).*$/i
-const exp4 = /^(?:https?:\/\/)?raw\.(?:githubusercontent|github)\.com\/.+?\/.+?\/.+?\/.+$/i
-const exp5 = /^(?:https?:\/\/)?gist\.(?:githubusercontent|github)\.com\/.+?\/.+?\/.+$/i
-const exp6 = /^(?:https?:\/\/)?github\.com\/.+?\/.+?\/tags.*$/i
-const exp7 = /^(?:https?:\/\/)?api\.github\.com\/.*$/i
-
-/**
- * @param {any} body
- * @param {number} status
- * @param {Object<string, string>} headers
- */
-function makeRes(body, status = 200, headers = {}) {
-    headers['access-control-allow-origin'] = '*'
-    return new Response(body, {status, headers})
-}
-
-
-/**
- * @param {string} urlStr
- */
-function newUrl(urlStr) {
+// 检查字符串是否为Base64编码
+function isBase64(str) {
     try {
-        return new URL(urlStr)
+        return btoa(atob(str)) == str;
     } catch (err) {
-        return null
+        return false;
     }
 }
 
+// 测试单个链接
+async function testLink(link, testUrl) {
+    const fullLink = link + testUrl;
+    const startTime = Date.now();
 
-addEventListener('fetch', e => {
-    const ret = fetchHandler(e)
-        .catch(err => makeRes('cfworker error:\n' + err.stack, 502))
-    e.respondWith(ret)
-})
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
+        const response = await fetch(fullLink, {
+            method: 'HEAD',
+            signal: controller.signal
+        });
 
-function checkUrl(u) {
-    for (let i of [exp1, exp2, exp3, exp4, exp5, exp6, exp7]) {
-        if (u.search(i) === 0) {
-            return true
+        clearTimeout(timeoutId);
+
+        if (!response.ok && response.status !== 404) {
+            throw new Error(`HTTP ${response.status}`);
         }
+
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        
+        return {
+            link: link,
+            time: responseTime,
+            success: true
+        };
+
+    } catch (error) {
+        return {
+            link: link,
+            time: null,
+            success: false,
+            error: error.message
+        };
     }
-    return false
 }
 
-/**
- * @param {FetchEvent} e
- */
-async function fetchHandler(e) {
-    const req = e.request
-    const urlStr = req.url
-    const urlObj = new URL(urlStr)
-    let path = urlObj.searchParams.get('q')
-    if (path) {
-        return Response.redirect('https://' + urlObj.host + PREFIX + path, 301)
+exports.handler = async function(event, context) {
+    const params = event.queryStringParameters;
+    const encodedUrl = params.url;
+    
+    if (!encodedUrl) {
+        return {
+            statusCode: 400,
+            body: 'Missing url parameter. Usage: ?url=https://github.com/...'
+        };
     }
-    // cfworker 会把路径中的 `//` 合并成 `/`
-    path = urlObj.href.substr(urlObj.origin.length + PREFIX.length).replace(/^https?:\/+/, 'https://')
-    if (path.search(exp7) === 0) {
-        return httpHandler(req, path)
-    } else if (path.search(exp1) === 0 || path.search(exp5) === 0 || path.search(exp6) === 0 || path.search(exp3) === 0 || path.search(exp4) === 0) {
-        return httpHandler(req, path)
-    } else if (path.search(exp2) === 0) {
-        if (Config.jsdelivr) {
-            const newUrl = path.replace('/blob/', '@').replace(/^(?:https?:\/\/)?github\.com/, 'https://cdn.jsdelivr.net/gh')
-            return Response.redirect(newUrl, 302)
+
+    try {
+        // 解析输入URL
+        let inputContent = encodedUrl;
+        try {
+            if (isBase64(encodedUrl)) {
+                inputContent = atob(encodedUrl);
+            } else {
+                inputContent = decodeURIComponent(encodedUrl);
+            }
+        } catch (e) {
+            inputContent = encodedUrl;
+        }
+
+        // 确保URL格式正确
+        if (!inputContent.startsWith('http')) {
+            inputContent = 'https://github.com/' + inputContent.replace(/^https?:\/\/github\.com\//, '');
+        }
+
+        const testUrl = "https://raw.githubusercontent.com/Ls-WanMeng/imagebed/main/README.md";
+        let fastestResult = null;
+
+        console.log('开始测试镜像节点...');
+
+        // 串行测试（避免并发过高被限制）
+        for (const link of builtInLinks) {
+            if (!link.trim()) continue;
+
+            const result = await testLink(link, testUrl);
+            
+            if (result.success) {
+                fastestResult = {
+                    ...result,
+                    fullLink: link + inputContent
+                };
+                console.log(`找到最快镜像: ${fastestResult.link}, 响应时间: ${fastestResult.time}ms`);
+                break; // 找到第一个可用的就停止
+            }
+        }
+
+        if (fastestResult) {
+            // 返回302重定向
+            return {
+                statusCode: 302,
+                headers: {
+                    'Location': fastestResult.fullLink,
+                    'Cache-Control': 'no-cache'
+                },
+                body: ''
+            };
         } else {
-            path = path.replace('/blob/', '/raw/')
-            return httpHandler(req, path)
+            console.log('所有镜像测试失败，使用默认镜像');
+            // 使用第一个有效镜像作为备用
+            const validLink = builtInLinks.find(link => link.trim());
+            if (validLink) {
+                const fallbackLink = validLink + inputContent;
+                return {
+                    statusCode: 302,
+                    headers: {
+                        'Location': fallbackLink,
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: ''
+                };
+            } else {
+                return {
+                    statusCode: 503,
+                    body: 'No available mirrors found'
+                };
+            }
         }
-    } else if (path.search(exp4) === 0) {
-        const newUrl = path.replace(/(?<=com\/.+?\/.+?)\/(.+?\/)/, '@$1').replace(/^(?:https?:\/\/)?raw\.(?:githubusercontent|github)\.com/, 'https://cdn.jsdelivr.net/gh')
-        return Response.redirect(newUrl, 302)
-    } else {
-        return fetch(ASSET_URL + path)
+
+    } catch (error) {
+        console.error('Function error:', error);
+        return {
+            statusCode: 500,
+            body: 'Internal Server Error'
+        };
     }
-}
-
-
-/**
- * @param {Request} req
- * @param {string} pathname
- */
-function httpHandler(req, pathname) {
-    const reqHdrRaw = req.headers
-
-    // preflight
-    if (req.method === 'OPTIONS' &&
-        reqHdrRaw.has('access-control-request-headers')
-    ) {
-        return new Response(null, PREFLIGHT_INIT)
-    }
-
-    const reqHdrNew = new Headers(reqHdrRaw)
-
-    let urlStr = pathname
-    let flag = !Boolean(whiteList.length)
-    for (let i of whiteList) {
-        if (urlStr.includes(i)) {
-            flag = true
-            break
-        }
-    }
-    if (!flag) {
-        return new Response("blocked", {status: 403})
-    }
-    if (urlStr.search(/^https?:\/\//) !== 0) {
-        urlStr = 'https://' + urlStr
-    }
-    const urlObj = newUrl(urlStr)
-
-    /** @type {RequestInit} */
-    const reqInit = {
-        method: req.method,
-        headers: reqHdrNew,
-        redirect: 'manual',
-        body: req.body
-    }
-    return proxy(urlObj, reqInit)
-}
-
-
-/**
- *
- * @param {URL} urlObj
- * @param {RequestInit} reqInit
- */
-async function proxy(urlObj, reqInit) {
-    const res = await fetch(urlObj.href, reqInit)
-    const resHdrOld = res.headers
-    const resHdrNew = new Headers(resHdrOld)
-
-    const status = res.status
-
-    if (resHdrNew.has('location')) {
-        let _location = resHdrNew.get('location')
-        if (checkUrl(_location))
-            resHdrNew.set('location', PREFIX + _location)
-        else {
-            reqInit.redirect = 'follow'
-            return proxy(newUrl(_location), reqInit)
-        }
-    }
-    resHdrNew.set('access-control-expose-headers', '*')
-    resHdrNew.set('access-control-allow-origin', '*')
-
-    resHdrNew.delete('content-security-policy')
-    resHdrNew.delete('content-security-policy-report-only')
-    resHdrNew.delete('clear-site-data')
-
-    return new Response(res.body, {
-        status,
-        headers: resHdrNew,
-    })
-}
+};
