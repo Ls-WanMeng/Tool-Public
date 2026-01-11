@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/*"
-  to = "./netlify/functions/githubmirrorsite?"
+  to = "./netlify/functions/api?"
   status = 200
   force = true
