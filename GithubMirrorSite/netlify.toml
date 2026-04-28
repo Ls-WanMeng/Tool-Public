@@ -1,8 +1,0 @@
-[build]
-  functions = "functions"
-publish="."
-[[redirects]]
-  from = "/"
-  to = "/.functions/GithubMirrorSite?"
-  status = 200
-  force = true
