@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量图片全屏水印</title>
+    <style>
+        /* 样式部分保持不变 */
+        :root {
+            --bg-color: #f5f5f5;
+            --container-bg: white;
+            --text-color: #333;
+            --border-color: #ccc;
+            --primary-color: #4CAF50;
+            --primary-hover: #45a049;
+            --secondary-color: #2196F3;
+            --secondary-hover: #0b7dda;
+            --warning-color: #ff9800;
+            --warning-hover: #e68a00;
+            --danger-color: #f44336;
+            --danger-hover: #d32f2f;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --container-bg: #1e1e1e;
+                --text-color: #f5f5f5;
+                --border-color: #444;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 15px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1, h3 {
+            color: var(--text-color);
+            margin-top: 0;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: calc(50% - 5px);
+            height: 0;
+            padding-bottom: calc(50% - 5px);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        @media (min-width: 600px) {
+            .image-wrapper {
+                width: calc(33.333% - 7px);
+                padding-bottom: calc(33.333% - 7px);
+            }
+        }
+
+        @media (min-width: 900px) {
+            .image-wrapper {
+                width: calc(25% - 8px);
+                padding-bottom: calc(25% - 8px);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .image-wrapper {
+                width: calc(20% - 8px);
+                padding-bottom: calc(20% - 8px);
+            }
+        }
+
+        .image-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .controls {
+            margin: 15px 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: var(--secondary-hover);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background-color: var(--warning-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            width: 100%;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        #progress-bar {
+            height: 15px;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .text-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .text-entry {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .text-entry input[type="text"] {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .text-entry input[type="number"] {
+            width: 60px;
+        }
+
+        .file-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px;
+            font-size: 12px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 全屏预览样式 */
+        .fullscreen-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .fullscreen-preview.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .fullscreen-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .close-preview {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+
+        .text-entry-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>批量图片全屏水印</h1>
+        
+        <div class="upload-area" id="drop-area">
+            <p>点击或拖拽图片到此处上传</p>
+            <input type="file" id="file-input" accept="image/*" multiple>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <h3>水印文字设置</h3>
+                <div class="text-entries" id="text-entries">
+                    <div class="text-entry">
+                        <div class="text-entry-controls">
+                            <input type="text" placeholder="水印文字" class="watermark-text" value="版权保护">
+                            <input type="number" placeholder="权重" min="1" value="1" class="watermark-weight">
+                            <button class="btn-danger remove-text-btn">删除</button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-warning" id="add-text-btn">添加更多文字</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>水印样式设置</h3>
+                <div class="slider-container">
+                    <label for="opacity">透明度：</label>
+                    <input type="range" id="opacity" min="0.1" max="0.8" step="0.05" value="0.4">
+                    <span id="opacity-value">40%</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="density">密度：</label>
+                    <input type="range" id="density" min="1" max="15" step="1" value="8">
+                    <span id="density-value">8</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="complexity">复杂度：</label>
+                    <input type="range" id="complexity" min="1" max="5" step="1" value="4">
+                    <span id="complexity-value">4</span>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="noise-level">噪点强度：</label>
+                    <input type="range" id="noise-level" min="0" max="100" step="5" value="30">
+                    <span id="noise-level-value">30%</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>高级防伪设置</h3>
+                <div>
+                    <input type="checkbox" id="enable-fingerprint" checked>
+                    <label for="enable-fingerprint">嵌入数字指纹</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="enable-distortion" checked>
+                    <label for="enable-distortion">启用图像扭曲</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="enable-dynamic-opacity" checked>
+                    <label for="enable-dynamic-opacity">动态透明度</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="enable-critical-area" checked>
+                    <label for="enable-critical-area">重点区域保护</label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>操作</h3>
+                <button class="btn-primary" id="add-watermark">添加水印</button>
+                <button class="btn-secondary" id="download-all" disabled>下载全部（ZIP压缩包）</button>
+                <button class="btn-danger" id="clear-images">清除所有图片</button>
+                <button class="btn-secondary" id="save-config">保存当前配置</button>
+            </div>
+        </div>
+        
+        <div class="progress-container" id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        
+        <div class="preview-container" id="preview-container"></div>
+    </div>
+
+    <!-- 全屏预览 -->
+    <div class="fullscreen-preview" id="fullscreen-preview">
+        <button class="close-preview" id="close-preview">&times;</button>
+        <img class="fullscreen-image" id="fullscreen-image" src="" alt="全屏预览">
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // 全局变量
+        let originalImages = [];
+        let watermarkedImages = [];
+        
+        // DOM元素
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const previewContainer = document.getElementById('preview-container');
+        const textEntriesContainer = document.getElementById('text-entries');
+        const addTextBtn = document.getElementById('add-text-btn');
+        const opacitySlider = document.getElementById('opacity');
+        const opacityValue = document.getElementById('opacity-value');
+        const densitySlider = document.getElementById('density');
+        const densityValue = document.getElementById('density-value');
+        const complexitySlider = document.getElementById('complexity');
+        const complexityValue = document.getElementById('complexity-value');
+        const noiseLevelSlider = document.getElementById('noise-level');
+        const noiseLevelValue = document.getElementById('noise-level-value');
+        const enableFingerprint = document.getElementById('enable-fingerprint');
+        const enableDistortion = document.getElementById('enable-distortion');
+        const enableDynamicOpacity = document.getElementById('enable-dynamic-opacity');
+        const enableCriticalArea = document.getElementById('enable-critical-area');
+        const addWatermarkBtn = document.getElementById('add-watermark');
+        const downloadAllBtn = document.getElementById('download-all');
+        const clearImagesBtn = document.getElementById('clear-images');
+        const saveConfigBtn = document.getElementById('save-config');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const fullscreenPreview = document.getElementById('fullscreen-preview');
+        const fullscreenImage = document.getElementById('fullscreen-image');
+        const closePreviewBtn = document.getElementById('close-preview');
+        
+        // 初始化
+        loadConfig();
+        
+        // 事件监听器
+        dropArea.addEventListener('click', () => fileInput.click());
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = 'var(--primary-color)';
+        });
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.borderColor = 'var(--border-color)';
+        });
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = 'var(--border-color)';
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                handleFiles(fileInput.files);
+            }
+        });
+        
+        opacitySlider.addEventListener('input', () => {
+            opacityValue.textContent = `${Math.round(opacitySlider.value * 100)}%`;
+        });
+        
+        densitySlider.addEventListener('input', () => {
+            densityValue.textContent = densitySlider.value;
+        });
+        
+        complexitySlider.addEventListener('input', () => {
+            complexityValue.textContent = complexitySlider.value;
+        });
+        
+        noiseLevelSlider.addEventListener('input', () => {
+            noiseLevelValue.textContent = `${noiseLevelSlider.value}%`;
+        });
+        
+        addTextBtn.addEventListener('click', () => {
+            addTextEntry();
+        });
+        
+        addWatermarkBtn.addEventListener('click', addWatermarkToAllImages);
+        downloadAllBtn.addEventListener('click', downloadAllAsZip);
+        clearImagesBtn.addEventListener('click', clearAllImages);
+        saveConfigBtn.addEventListener('click', saveConfig);
+        closePreviewBtn.addEventListener('click', closeFullscreenPreview);
+        
+        // 添加文本输入行
+        function addTextEntry(text = '', weight = 1) {
+            const entry = document.createElement('div');
+            entry.className = 'text-entry';
+            entry.innerHTML = `
+                <div class="text-entry-controls">
+                    <input type="text" placeholder="水印文字" class="watermark-text" value="${text}">
+                    <input type="number" placeholder="权重" min="1" value="${weight}" class="watermark-weight">
+                    <button class="btn-danger remove-text-btn">删除</button>
+                </div>
+            `;
+            textEntriesContainer.appendChild(entry);
+            
+            // 为新添加的删除按钮添加事件监听
+            entry.querySelector('.remove-text-btn').addEventListener('click', () => {
+                if (textEntriesContainer.querySelectorAll('.text-entry').length > 1) {
+                    entry.remove();
+                } else {
+                    alert('至少需要保留一个水印文字');
+                }
+            });
+        }
+        
+        // 处理上传的文件
+        function handleFiles(files) {
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length === 0) {
+                alert('请上传图片文件');
+                return;
+            }
+            
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // 检查是否已存在同名图片
+                        const existingIndex = originalImages.findIndex(img => img.file.name === file.name);
+                        
+                        if (existingIndex >= 0) {
+                            // 替换已存在的图片
+                            originalImages[existingIndex] = {
+                                file: file,
+                                element: img,
+                                url: e.target.result
+                            };
+                            
+                            // 更新预览
+                            const wrapper = previewContainer.children[existingIndex];
+                            if (wrapper) {
+                                wrapper.querySelector('img').src = e.target.result;
+                                wrapper.querySelector('.file-name').textContent = getShortFileName(file.name);
+                            }
+                        } else {
+                            // 添加新图片
+                            originalImages.push({
+                                file: file,
+                                element: img,
+                                url: e.target.result
+                            });
+                            
+                            // 创建预览
+                            createPreviewImage(e.target.result, file.name);
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 获取缩短的文件名
+        function getShortFileName(name) {
+            return name.length > 20 ? name.substring(0, 17) + '...' : name;
+        }
+        
+        // 创建预览图片
+        function createPreviewImage(src, fileName) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper';
+            
+            const previewImg = document.createElement('img');
+            previewImg.src = src;
+            previewImg.alt = fileName;
+            previewImg.dataset.originalSrc = src; // 存储原始图片URL
+            
+            const fileNameDiv = document.createElement('div');
+            fileNameDiv.className = 'file-name';
+            fileNameDiv.textContent = getShortFileName(fileName);
+            
+            wrapper.appendChild(previewImg);
+            wrapper.appendChild(fileNameDiv);
+            previewContainer.appendChild(wrapper);
+            
+            // 添加点击事件
+            wrapper.addEventListener('click', () => {
+                // 优先显示已加水印的图片，如果没有则显示原始图片
+                const watermarkedImg = watermarkedImages.find(img => img.file.name === fileName);
+                showFullscreenPreview(watermarkedImg ? watermarkedImg.url : src);
+            });
+        }
+        
+        // 显示全屏预览
+        function showFullscreenPreview(src) {
+            fullscreenImage.src = src;
+            fullscreenPreview.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 关闭全屏预览
+        function closeFullscreenPreview() {
+            fullscreenPreview.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // 获取所有水印文字和权重
+        function getWatermarkTexts() {
+            const entries = textEntriesContainer.querySelectorAll('.text-entry');
+            const texts = [];
+            const weights = [];
+            
+            entries.forEach(entry => {
+                const textInput = entry.querySelector('.watermark-text');
+                const weightInput = entry.querySelector('.watermark-weight');
+                
+                if (textInput.value.trim()) {
+                    texts.push(textInput.value.trim());
+                    weights.push(parseInt(weightInput.value) || 1);
+                }
+            });
+            
+            // 如果没有输入任何文字，使用默认值
+            if (texts.length === 0) {
+                texts.push('版权保护');
+                weights.push(1);
+            }
+            
+            return { texts, weights };
+        }
+        
+        // 根据权重随机选择一个水印文字
+        function getRandomWatermarkText(texts, weights) {
+            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+            let random = Math.random() * totalWeight;
+            
+            for (let i = 0; i < texts.length; i++) {
+                if (random < weights[i]) {
+                    return texts[i];
+                }
+                random -= weights[i];
+            }
+            
+            return texts[0];
+        }
+        
+        // 生成随机颜色
+        function getRandomColor(opacity) {
+            const types = [
+                // 彩色
+                () => `hsla(${Math.floor(Math.random() * 360)}, 80%, 50%, ${opacity})`,
+                // 黑白
+                () => {
+                    const brightness = Math.random() > 0.5 ? '80%' : '20%';
+                    return `hsla(0, 0%, ${brightness}, ${opacity})`;
+                },
+                // 半透明
+                () => {
+                    const r = Math.floor(Math.random() * 256);
+                    const g = Math.floor(Math.random() * 256);
+                    const b = Math.floor(Math.random() * 256);
+                    return `rgba(${r}, ${g}, ${b}, ${opacity * 0.7})`;
+                }
+            ];
+            
+            return types[Math.floor(Math.random() * types.length)]();
+        }
+        
+        // 生成多色文字（每个字符不同颜色）
+        function getMultiColorText(text, opacity) {
+            let html = '';
+            for (let i = 0; i < text.length; i++) {
+                const color = getRandomColor(opacity);
+                html += `<span style="color:${color}">${text[i]}</span>`;
+            }
+            return html;
+        }
+        
+        // 添加数字指纹
+        function addDigitalFingerprint(ctx, width, height) {
+            // 创建微小的、几乎不可见的标记
+            const markerSize = Math.max(1, Math.min(width, height) / 500);
+            const markerColor = `rgba(0, 0, 0, 0.01)`;
+            
+            // 在固定位置添加微小标记
+            const positions = [
+                {x: width * 0.1, y: height * 0.1},
+                {x: width * 0.9, y: height * 0.1},
+                {x: width * 0.1, y: height * 0.9},
+                {x: width * 0.9, y: height * 0.9},
+                {x: width * 0.5, y: height * 0.5}
+            ];
+            
+            positions.forEach(pos => {
+                ctx.fillStyle = markerColor;
+                ctx.fillRect(pos.x, pos.y, markerSize, markerSize);
+            });
+            
+            // 添加微小的颜色偏移
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // 在特定像素上添加微小变化
+            for (let i = 0; i < data.length; i += 40) {
+                if (i % 4 !== 3) { // 不改变alpha通道
+                    data[i] = (data[i] + 1) % 256;
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        // 添加图像扭曲
+        function addImageDistortion(ctx, width, height, complexity) {
+            const intensity = complexity * 0.2;
+            const waveLength = width / (10 + complexity * 5);
+            
+            // 创建扭曲效果
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            const newData = new Uint8ClampedArray(data.length);
+            
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    // 计算扭曲偏移
+                    const offsetX = Math.sin(y / waveLength) * intensity * 2;
+                    const offsetY = Math.cos(x / waveLength) * intensity;
+                    
+                    const newX = Math.max(0, Math.min(width - 1, Math.floor(x + offsetX)));
+                    const newY = Math.max(0, Math.min(height - 1, Math.floor(y + offsetY)));
+                    
+                    // 复制像素
+                    const origPos = (y * width + x) * 4;
+                    const newPos = (newY * width + newX) * 4;
+                    
+                    newData[origPos] = data[newPos];
+                    newData[origPos + 1] = data[newPos + 1];
+                    newData[origPos + 2] = data[newPos + 2];
+                    newData[origPos + 3] = data[newPos + 3];
+                }
+            }
+            
+            // 应用扭曲
+            const newImageData = new ImageData(newData, width, height);
+            ctx.putImageData(newImageData, 0, 0);
+        }
+        
+        // 添加重点区域保护
+        function protectCriticalAreas(ctx, width, height, texts, opacity) {
+            // 在图像中心区域添加更密集的水印
+            const centerWidth = width * 0.6;
+            const centerHeight = height * 0.6;
+            const centerX = (width - centerWidth) / 2;
+            const centerY = (height - centerHeight) / 2;
+            
+            // 增加中心区域的水印密度
+            const centerDensity = 3;
+            const cellWidth = centerWidth / (centerDensity * 2);
+            const cellHeight = centerHeight / centerDensity;
+            
+            for (let i = 0; i < centerDensity * 2; i++) {
+                for (let j = 0; j < centerDensity; j++) {
+                    const x = centerX + i * cellWidth + cellWidth / 2;
+                    const y = centerY + j * cellHeight + cellHeight / 2;
+                    
+                    // 随机旋转角度
+                    const angle = Math.random() * 360;
+                    
+                    // 保存当前状态
+                    ctx.save();
+                    
+                    // 移动到水印位置并旋转
+                    ctx.translate(x, y);
+                    ctx.rotate(angle * Math.PI / 180);
+                    
+                    // 绘制水印
+                    const text = texts[Math.floor(Math.random() * texts.length)];
+                    ctx.fillStyle = getRandomColor(opacity * 1.5); // 中心区域水印更明显
+                    ctx.fillText(text, 0, 0);
+                    
+                    // 恢复状态
+                    ctx.restore();
+                }
+            }
+        }
+        
+        // 添加水印到所有图片
+        function addWatermarkToAllImages() {
+            if (originalImages.length === 0) {
+                alert('请先上传图片');
+                return;
+            }
+            
+            const { texts, weights } = getWatermarkTexts();
+            const opacity = parseFloat(opacitySlider.value);
+            const density = parseInt(densitySlider.value);
+            const complexity = parseInt(complexitySlider.value);
+            const noiseLevel = parseInt(noiseLevelSlider.value) / 100;
+            
+            watermarkedImages = [];
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            addWatermarkBtn.disabled = true;
+            
+            let processed = 0;
+            
+            originalImages.forEach((imgData, index) => {
+                setTimeout(() => {
+                    const watermarked = addWatermark(
+                        imgData.element, 
+                        texts, 
+                        weights,
+                        opacity, 
+                        density,
+                        complexity,
+                        noiseLevel
+                    );
+                    
+                    watermarkedImages.push({
+                        file: imgData.file,
+                        url: watermarked,
+                        name: imgData.file.name.replace(/(\.[^/.]+)?$/, '_watermarked$&')
+                    });
+                    
+                    // 更新预览
+                    const wrapper = previewContainer.children[index];
+                    if (wrapper) {
+                        wrapper.querySelector('img').src = watermarked;
+                    }
+                    
+                    // 更新进度条
+                    processed++;
+                    const progress = (processed / originalImages.length) * 100;
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (processed === originalImages.length) {
+                        addWatermarkBtn.disabled = false;
+                        downloadAllBtn.disabled = false;
+                    }
+                }, 0);
+            });
+        }
+        
+        // 添加水印到单个图片
+        function addWatermark(img, texts, weights, opacity, density, complexity, noiseLevel) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制原始图片
+            ctx.drawImage(img, 0, 0);
+            
+            // 添加数字指纹
+            if (enableFingerprint.checked) {
+                addDigitalFingerprint(ctx, canvas.width, canvas.height);
+            }
+            
+            // 添加图像扭曲
+            if (enableDistortion.checked) {
+                addImageDistortion(ctx, canvas.width, canvas.height, complexity);
+            }
+            
+            // 设置水印样式
+            const baseFontSize = Math.max(14, Math.min(img.width, img.height) / 20);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 计算水印分布
+            const cols = density * 2;
+            const rows = density;
+            const cellWidth = img.width / cols;
+            const cellHeight = img.height / rows;
+            
+            // 添加多种类型的水印
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    const x = i * cellWidth + cellWidth / 2;
+                    const y = j * cellHeight + cellHeight / 2;
+                    
+                    // 随机旋转角度
+                    const angle = Math.random() * 360;
+                    
+                    // 动态透明度
+                    const dynamicOpacity = enableDynamicOpacity.checked 
+                        ? opacity * (0.7 + Math.random() * 0.6) // 70%-130%的基础透明度
+                        : opacity;
+                    
+                    // 保存当前状态
+                    ctx.save();
+                    
+                    // 移动到水印位置并旋转
+                    ctx.translate(x, y);
+                    ctx.rotate(angle * Math.PI / 180);
+                    
+                    // 根据复杂度决定水印类型数量
+                    const typeCount = Math.min(7, 2 + complexity * 2);
+                    const type = Math.floor(Math.random() * typeCount);
+                    
+                    // 随机字体大小
+                    const fontSize = baseFontSize * (0.7 + Math.random() * 0.6);
+                    ctx.font = `${fontSize}px Arial`;
+                    
+                    if (type === 0) {
+                        // 文字水印 - 单色
+                        ctx.fillStyle = getRandomColor(dynamicOpacity);
+                        ctx.fillText(getRandomWatermarkText(texts, weights), 0, 0);
+                    } else if (type === 1) {
+                        // 文字水印 - 多色（每个字符不同颜色）
+                        const text = getRandomWatermarkText(texts, weights);
+                        let xOffset = -ctx.measureText(text).width / 2;
+                        
+                        for (let k = 0; k < text.length; k++) {
+                            ctx.fillStyle = getRandomColor(dynamicOpacity);
+                            ctx.fillText(text[k], xOffset, 0);
+                            xOffset += ctx.measureText(text[k]).width;
+                        }
+                    } else if (type === 2) {
+                        // 圆形水印
+                        ctx.beginPath();
+                        const radius = cellWidth / (8 + Math.random() * 4);
+                        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = getRandomColor(dynamicOpacity);
+                        ctx.fill();
+                    } else if (type === 3) {
+                        // 线条水印
+                        ctx.beginPath();
+                        const length = cellWidth / (3 + Math.random() * 2);
+                        ctx.moveTo(-length / 2, 0);
+                        ctx.lineTo(length / 2, 0);
+                        ctx.strokeStyle = getRandomColor(dynamicOpacity);
+                        ctx.lineWidth = 1 + Math.random() * 3;
+                        ctx.stroke();
+                    } else if (type === 4) {
+                        // 复杂形状水印
+                        ctx.beginPath();
+                        const size = cellWidth / (4 + Math.random() * 4);
+                        const sides = 3 + Math.floor(Math.random() * 5); // 3-7边形
+                        
+                        for (let k = 0; k < sides; k++) {
+                            const angle = (k * 2 * Math.PI) / sides;
+                            const x = size * Math.cos(angle);
+                            const y = size * Math.sin(angle);
+                            if (k === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        
+                        ctx.closePath();
+                        if (Math.random() > 0.5) {
+                            ctx.fillStyle = getRandomColor(dynamicOpacity);
+                            ctx.fill();
+                        } else {
+                            ctx.strokeStyle = getRandomColor(dynamicOpacity);
+                            ctx.lineWidth = 1 + Math.random() * 2;
+                            ctx.stroke();
+                        }
+                    } else if (type === 5) {
+                        // 交叉线水印
+                        ctx.beginPath();
+                        const size = cellWidth / (3 + Math.random() * 2);
+                        ctx.moveTo(-size/2, -size/2);
+                        ctx.lineTo(size/2, size/2);
+                        ctx.moveTo(size/2, -size/2);
+                        ctx.lineTo(-size/2, size/2);
+                        ctx.strokeStyle = getRandomColor(dynamicOpacity);
+                        ctx.lineWidth = 1 + Math.random() * 2;
+                        ctx.stroke();
+                    } else {
+                        // 随机点阵水印
+                        const points = 5 + Math.floor(Math.random() * 10);
+                        const pointSize = 1 + Math.random() * 3;
+                        
+                        for (let k = 0; k < points; k++) {
+                            const px = (Math.random() - 0.5) * cellWidth * 0.8;
+                            const py = (Math.random() - 0.5) * cellHeight * 0.8;
+                            
+                            ctx.beginPath();
+                            ctx.arc(px, py, pointSize, 0, Math.PI * 2);
+                            ctx.fillStyle = getRandomColor(dynamicOpacity);
+                            ctx.fill();
+                        }
+                    }
+                    
+                    // 恢复状态
+                    ctx.restore();
+                }
+            }
+            
+            // 添加重点区域保护
+            if (enableCriticalArea.checked) {
+                protectCriticalAreas(ctx, canvas.width, canvas.height, texts, opacity);
+            }
+            
+            // 添加额外的随机干扰点
+            const dotCount = density * 15 * complexity;
+            for (let i = 0; i < dotCount; i++) {
+                const x = Math.random() * img.width;
+                const y = Math.random() * img.height;
+                const size = Math.random() * 3 + 1;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fillStyle = getRandomColor(opacity * 0.7);
+                ctx.fill();
+            }
+            
+            // 添加随机线条干扰
+            const lineCount = density * 3 * complexity;
+            for (let i = 0; i < lineCount; i++) {
+                const x1 = Math.random() * img.width;
+                const y1 = Math.random() * img.height;
+                const x2 = x1 + (Math.random() * 100 - 50);
+                const y2 = y1 + (Math.random() * 100 - 50);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = getRandomColor(opacity * 0.5);
+                ctx.lineWidth = 0.5 + Math.random() * 2;
+                ctx.stroke();
+            }
+            
+            // 添加噪点
+            if (noiseLevel > 0) {
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    if (Math.random() < noiseLevel) {
+                        const noise = Math.floor(Math.random() * 40) - 20;
+                        data[i] = Math.max(0, Math.min(255, data[i] + noise));     // R
+                        data[i+1] = Math.max(0, Math.min(255, data[i+1] + noise)); // G
+                        data[i+2] = Math.max(0, Math.min(255, data[i+2] + noise)); // B
+                    }
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+            }
+            
+            // 添加半透明覆盖层（增加去除难度）
+            if (complexity >= 4) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 0.05})`;
+                ctx.fillRect(0, 0, img.width, img.height);
+            }
+            
+            return canvas.toDataURL('image/jpeg', 0.9);
+        }
+        
+        // 下载所有加水印的图片为ZIP压缩包
+        function downloadAllAsZip() {
+            if (watermarkedImages.length === 0) {
+                alert('请先添加水印');
+                return;
+            }
+            
+            const zip = new JSZip();
+            const imgFolder = zip.folder("!水印保护");
+            
+            // 添加所有图片到ZIP
+            watermarkedImages.forEach(img => {
+                const base64Data = img.url.replace(/^data:image\/(jpeg|png);base64,/, "");
+                imgFolder.file(img.name, base64Data, { base64: true });
+            });
+            
+            // 生成ZIP文件并下载
+            zip.generateAsync({ type: "blob" })
+                .then(content => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    
+                    // 生成24小时制时分秒_年月日格式的时间戳
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    
+                    const timestamp = `${hours}${minutes}${seconds}_${year}${month}${day}`;
+                    link.download = `!水印保护_${timestamp}.zip`;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+        }
+        
+        // 清除所有图片
+        function clearAllImages() {
+            if (originalImages.length === 0) {
+                alert('没有图片可清除');
+                return;
+            }
+            
+            if (confirm('确定要清除所有图片吗？')) {
+                originalImages = [];
+                watermarkedImages = [];
+                previewContainer.innerHTML = '';
+                downloadAllBtn.disabled = true;
+            }
+        }
+        
+        // 保存当前配置
+        function saveConfig() {
+            const config = {
+                watermarkTexts: [],
+                opacity: opacitySlider.value,
+                density: densitySlider.value,
+                complexity: complexitySlider.value,
+                noiseLevel: noiseLevelSlider.value,
+                enableFingerprint: enableFingerprint.checked,
+                enableDistortion: enableDistortion.checked,
+                enableDynamicOpacity: enableDynamicOpacity.checked,
+                enableCriticalArea: enableCriticalArea.checked
+            };
+            
+            document.querySelectorAll('.text-entry').forEach(entry => {
+                const text = entry.querySelector('.watermark-text').value;
+                const weight = entry.querySelector('.watermark-weight').value;
+                config.watermarkTexts.push({ text, weight });
+            });
+            
+            localStorage.setItem('watermarkConfig', JSON.stringify(config));
+            alert('配置已保存！');
+        }
+        
+        // 加载保存的配置
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('watermarkConfig');
+            if (savedConfig) {
+                try {
+                    const config = JSON.parse(savedConfig);
+                    
+                    // 清除默认的文本输入行
+                    textEntriesContainer.innerHTML = '';
+                    
+                    // 添加保存的文本输入行
+                    if (config.watermarkTexts && config.watermarkTexts.length > 0) {
+                        config.watermarkTexts.forEach(item => {
+                            addTextEntry(item.text, item.weight);
+                        });
+                    } else {
+                        addTextEntry('版权保护', 1);
+                    }
+                    
+                    // 设置滑块值
+                    if (config.opacity) {
+                        opacitySlider.value = config.opacity;
+                        opacityValue.textContent = `${Math.round(config.opacity * 100)}%`;
+                    }
+                    
+                    if (config.density) {
+                        densitySlider.value = config.density;
+                        densityValue.textContent = config.density;
+                    }
+                    
+                    if (config.complexity) {
+                        complexitySlider.value = config.complexity;
+                        complexityValue.textContent = config.complexity;
+                    }
+                    
+                    if (config.noiseLevel) {
+                        noiseLevelSlider.value = config.noiseLevel;
+                        noiseLevelValue.textContent = `${config.noiseLevel}%`;
+                    }
+                    
+                    // 设置复选框状态
+                    if (config.enableFingerprint !== undefined) {
+                        enableFingerprint.checked = config.enableFingerprint;
+                    }
+                    if (config.enableDistortion !== undefined) {
+                        enableDistortion.checked = config.enableDistortion;
+                    }
+                    if (config.enableDynamicOpacity !== undefined) {
+                        enableDynamicOpacity.checked = config.enableDynamicOpacity;
+                    }
+                    if (config.enableCriticalArea !== undefined) {
+                        enableCriticalArea.checked = config.enableCriticalArea;
+                    }
+                } catch (e) {
+                    console.error('加载配置失败:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

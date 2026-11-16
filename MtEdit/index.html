@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#e8e1d3">
+    <meta name="referrer" content="no-referrer">
+    <title>文本格式编辑器 · 排版工作台</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fbf7ee'/%3E%3Crect x='.5' y='.5' width='31' height='31' fill='none' stroke='%231c1813'/%3E%3Cpath d='M7 9h18M7 15h18M7 21h11' stroke='%23c03a24' stroke-width='2'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="123.css?v=24">
+</head>
+<body>
+    <div class="stage">
+        <div class="sheet">
+            <div class="runninghead" aria-hidden="true">
+                <span>MT · Typesetting Desk</span>
+                <span class="mid">BBCode / 论坛排版</span>
+                <span>Vol. 02 — 2026</span>
+            </div>
+
+            <header class="masthead">
+                <div class="brand">
+                    <div class="seal" aria-hidden="true">MT</div>
+                    <div class="brand-copy">
+                        <p class="kicker">MT · 排版工作台</p>
+                        <h1>文本格式编辑器</h1>
+                        <p class="tagline">把论坛帖子排成一张干净的版面。</p>
+                    </div>
+                </div>
+                <div class="masthead-side">
+                    <div class="issue" aria-hidden="true">
+                        <strong>No. 02</strong>
+                        <span>BBCode / 2026</span>
+                    </div>
+                    <div class="masthead-actions">
+                        <span class="save-state" id="saveState"><span class="dot" aria-hidden="true"></span>自动保存</span>
+                        <button class="theme-toggle" id="themeBtn" type="button" aria-label="切换深色模式" aria-pressed="false" title="切换主题">
+                            <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path>
+                            </svg>
+                            <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="12" cy="12" r="4"></circle>
+                                <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="workspace">
+                <button class="flip-tab" id="flipBtn" type="button" aria-pressed="false" aria-label="切换到预览">
+                    <span class="flip-tab-cn">预览</span>
+                    <span class="flip-tab-en" aria-hidden="true">Proof</span>
+                </button>
+
+                <section class="column column-editor" aria-labelledby="editorTitle">
+                    <div class="column-head">
+                        <h2 id="editorTitle"><span class="folio">01</span>正文<span class="head-en">Compose</span></h2>
+                        <span class="column-meta" id="charCount">0 字</span>
+                    </div>
+
+                    <div class="column-body">
+                        <div class="editor-wrap" id="editorWrap">
+                            <pre class="editor-highlight" id="editorHighlight" aria-hidden="true"><code></code></pre>
+                            <label class="sr-only" for="editor">BBCode 编辑区</label>
+                            <textarea id="editor" placeholder="在这里写内容，支持 BBCode…&#10;比如 [b]粗体[/b]、[color=Red]红字[/color]" spellcheck="false"></textarea>
+                        </div>
+
+                        <div class="tray">
+                            <div class="toolbar" role="toolbar" aria-label="格式工具">
+                                <div class="tool-group">
+                                    <label class="tool-label" for="sizeSelect">字号<span class="en">Size</span></label>
+                                    <div class="tool-control">
+                                        <select id="sizeSelect">
+                                            <option value="1">超小</option>
+                                            <option value="2">小</option>
+                                            <option value="3">偏小</option>
+                                            <option value="4" selected>中[标准]</option>
+                                            <option value="5">偏大</option>
+                                            <option value="6">大</option>
+                                            <option value="7">超大</option>
+                                        </select>
+                                        <button class="btn btn-apply" type="button" onclick="insertSizeTag(sizeSelect.value, true)">应用</button>
+                                    </div>
+                                </div>
+                                <div class="tool-group">
+                                    <label class="tool-label" for="fontSelect">字体<span class="en">Font</span></label>
+                                    <div class="tool-control">
+                                        <select id="fontSelect">
+                                            <option value="黑体">黑体</option>
+                                            <option value="宋体" selected>宋体</option>
+                                            <option value="新宋体">新宋体</option>
+                                            <option value="楷体，楷体_GB2312">楷体，楷体_GB2312</option>
+                                            <option value="仿宋，仿宋_GB2312">仿宋，仿宋_GB2312</option>
+                                            <option value="Arial">Arial</option>
+                                            <option value="Verdana">Verdana</option>
+                                            <option value="simsun">simsun</option>
+                                            <option value="Helvetica">Helvetica</option>
+                                            <option value="Trebuchet MS">Trebuchet MS</option>
+                                            <option value="Tahoma">Tahoma</option>
+                                            <option value="Impact">Impact</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                        </select>
+                                        <button class="btn btn-apply" type="button" onclick="insertTag('font='+fontSelect.value, '文字')">应用</button>
+                                    </div>
+                                </div>
+                                <div class="tool-group">
+                                    <label class="tool-label" for="alignSelect">对齐<span class="en">Align</span></label>
+                                    <div class="tool-control">
+                                        <select id="alignSelect">
+                                            <option value="left">左</option>
+                                            <option value="center" selected>居中</option>
+                                            <option value="right">右</option>
+                                        </select>
+                                        <button class="btn btn-apply" type="button" onclick="insertAlignTag(alignSelect.value, true)">应用</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="colorbar">
+                                <div class="color-cell">
+                                    <span class="tool-label">文字色</span>
+                                    <button class="btn color-btn" id="textColorBtn" type="button" style="color: Red; border-color: Red;">字体颜色</button>
+                                    <div class="recent-colors" id="recentTextColors" aria-label="最近使用的字体颜色"></div>
+                                </div>
+                                <div class="color-cell">
+                                    <span class="tool-label">底色</span>
+                                    <button class="btn color-btn" id="bgColorBtn" type="button" style="color: Crimson; border-color: Crimson;">字背景色</button>
+                                    <div class="recent-colors" id="recentBgColors" aria-label="最近使用的背景颜色"></div>
+                                </div>
+                                <div class="color-cell color-cell-rainbow">
+                                    <button class="btn btn-quiet" id="rainbowBtn" type="button" onclick="openRainbowGenerator()">
+                                        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M4 16a8 8 0 0 1 16 0"></path>
+                                            <path d="M7 16a5 5 0 0 1 10 0"></path>
+                                            <path d="M10 16a2 2 0 0 1 4 0"></path>
+                                        </svg>
+                                        彩虹文字
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="actions">
+                                <div class="copy-group" id="copyGroup">
+                                    <button class="btn btn-primary" type="button" onclick="copyToClipboard()">
+                                        <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <rect x="9" y="9" width="11" height="11" rx="1"></rect>
+                                            <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                        复制 BBCode
+                                    </button>
+                                    <button class="skill-tab" id="skillTab" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="skillMenu" title="更多复制方式">Skill<span aria-hidden="true">▾</span></button>
+                                    <div class="skill-menu" id="skillMenu" role="menu" aria-label="更多复制方式" hidden>
+                                        <button class="skill-menu-item" type="button" role="menuitem" onclick="copyWithSkill()">
+                                            <span class="skill-menu-name">复制文字+skill</span>
+                                            <span class="skill-menu-note">SKILL + 正文</span>
+                                        </button>
+                                        <button class="skill-menu-item" type="button" role="menuitem" onclick="downloadWithSkill()">
+                                            <span class="skill-menu-name">文字+skill文件</span>
+                                            <span class="skill-menu-note">下载 .txt</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="action-links">
+                                    <button class="btn btn-link" type="button" onclick="generateTags()">刷新预览</button>
+                                    <button class="btn btn-link is-danger" type="button" onclick="clearEditor()">清空内容</button>
+                                </div>
+                                <p class="hint">
+                                    <span>快捷键 <kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>Z</kbd> 撤销，加 <kbd>Shift</kbd> 重做</span>
+                                    <span class="hint-dot" aria-hidden="true">·</span>
+                                    <span>内容只保存在本机</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="column column-preview" aria-labelledby="previewTitle">
+                    <div class="column-head">
+                        <h2 id="previewTitle"><span class="folio">02</span>校样<span class="head-en">Proof</span></h2>
+                        <span class="live">实时</span>
+                    </div>
+
+                    <div class="column-body preview-body">
+                        <div class="proof" id="preview" aria-live="polite">
+                            <div class="preview-empty">
+                                <span class="empty-icon" aria-hidden="true">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 3h8l4 4v14H6z"></path>
+                                        <path d="M14 3v4h4"></path>
+                                        <path d="M9 12h6M9 16h4"></path>
+                                    </svg>
+                                </span>
+                                <strong>版面还是空的</strong>
+                                <span class="empty-copy">在左边写点内容，成品会实时排在这里。</span>
+                                <span class="empty-specimen" aria-hidden="true"><i></i><i></i><i></i></span>
+                            </div>
+                        </div>
+                        <div class="proof-foot" aria-hidden="true">
+                            <span>BBCode → HTML</span>
+                            <span>Live composition</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <section class="manual">
+                <button class="manual-toggle examples-toggle" type="button" onclick="toggleExamples()" aria-expanded="false" aria-controls="examplesContent">
+                    <span class="manual-heading">
+                        <span class="folio">03</span>
+                        <span class="manual-title">标签手册</span>
+                        <span class="manual-deck">常用语法与效果对照</span>
+                    </span>
+                    <span class="manual-action">
+                        <span class="manual-action-label" aria-hidden="true"></span>
+                        <span class="toggle-icon" aria-hidden="true"></span>
+                    </span>
+                </button>
+
+                <div class="collapsible-content" id="examplesContent">
+                    <div class="manual-grid">
+                        <article class="entry tag-example">
+                            <h4>基础文本</h4>
+                            <p><code>[b]粗体[/b]</code> — <b>粗体</b></p>
+                            <p><code>[i]斜体[/i]</code> — <i>斜体</i></p>
+                            <p><code>[u]下划线[/u]</code> — <u>下划线</u></p>
+                            <p><code>[s]删除线[/s]</code> — <s>删除线</s></p>
+                            <p><code>[hr]</code> — 分割线</p>
+                            <hr>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>字号与字体</h4>
+                            <p><code>[size=4][color=red][font=宋体]红色宋体[/font][/color][/size]</code></p>
+                            <div class="tag-example-preview">
+                                <span style="font-size: 16px; color: red; font-family: '宋体';">红色宋体</span>
+                            </div>
+                            <p class="note">字号 1 到 7，对应 12、13、15、16、18、22、30 像素，4 为标准。</p>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>对齐</h4>
+                            <p><code>[align=center]居中文字[/align]</code></p>
+                            <div class="tag-example-preview" style="text-align: center;">居中文字</div>
+                            <p>可选 left、center、right 三种。</p>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>图片与音频</h4>
+                            <p><code>[img]图片地址[/img]</code></p>
+                            <div class="tag-example-preview">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='60'%3E%3Crect width='150' height='60' fill='%23f6f0e4'/%3E%3Crect x='.5' y='.5' width='149' height='59' fill='none' stroke='%23c5b9a2'/%3E%3Cpath d='M20 45l25-20 18 14 14-11 33 17' fill='none' stroke='%23c03a24' stroke-width='2'/%3E%3Ccircle cx='112' cy='18' r='6' fill='%23c03a24'/%3E%3C/svg%3E" alt="图片示例" loading="lazy">
+                            </div>
+                            <p class="note"><code>[img=300,160]图片地址[/img]</code> 可指定尺寸。图床有防盗链时，加载失败会自动改用百度图片中转。</p>
+                            <p><code>[audio]音乐地址[/audio]</code></p>
+                            <div class="tag-example-preview">
+                                <audio controls>
+                                    <source src="https://example.com/music.mp3" type="audio/mpeg">
+                                    您的浏览器不支持音频元素
+                                </audio>
+                            </div>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>链接</h4>
+                            <p><code>[url=https://example.com]示例链接[/url]</code></p>
+                            <div class="tag-example-preview">
+                                <a href="https://example.com" target="_blank" rel="noopener">示例链接</a>
+                            </div>
+                            <p><code>[url]https://example.com[/url]</code> 直接显示网址。</p>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>特殊内容</h4>
+                            <p><code>[code]代码[/code]</code></p>
+                            <div class="code-block">function test() { return "代码块"; }</div>
+                            <p><code>[hide]隐藏内容[/hide]</code> 回复可见。</p>
+                            <div class="hidden-content">隐藏内容</div>
+                            <p><code>[quote]引用内容[/quote]</code></p>
+                            <blockquote>引用内容</blockquote>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>列表与表格</h4>
+                            <p><code>[list][*]项目一[*]项目二[/list]</code></p>
+                            <ul>
+                                <li>项目一</li>
+                                <li>项目二</li>
+                            </ul>
+                            <p><code>[list=1]…[/list]</code> 是有序列表。<code>[table][tr][td]…[/td][/tr][/table]</code> 是表格。</p>
+                            <table>
+                                <tr>
+                                    <td>单元格一</td>
+                                    <td>单元格二</td>
+                                </tr>
+                            </table>
+                        </article>
+
+                        <article class="entry tag-example">
+                            <h4>组合与彩虹</h4>
+                            <p><code>[b][color=blue][size=5]重要通知[/size][/color][/b]</code></p>
+                            <div class="tag-example-preview">
+                                <b><span style="color: blue; font-size: 18px;">重要通知</span></b>
+                            </div>
+                            <p>彩虹文字由生成器逐字上色，插入后是一串 color 标签。</p>
+                            <div class="tag-example-preview rainbow-example" id="rainbowExample">
+                                <span style="color:#c03a24">彩</span>
+                                <span style="color:#d4552f">虹</span>
+                                <span style="color:#e07a2e">文</span>
+                                <span style="color:#c9a227">字</span>
+                                <span style="color:#7d9b3a">效</span>
+                                <span style="color:#3f8f6b">果</span>
+                                <span style="color:#3c7f9e">示</span>
+                                <span style="color:#5a63a8">例</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="colophon">
+                <span class="colophon-brand"><span class="colophon-mark" aria-hidden="true">M</span>MT · 排版工作台</span>
+                <span class="colophon-links">
+                    <a href="https://bbs.binmt.cc/home.php?mod=space&amp;uid=145182&amp;do=profile" target="_blank" rel="noopener">MT 挽梦遗酒</a>
+                    <a href="https://bbs.binmt.cc/thread-151361-1-1.html" target="_blank" rel="noopener">工具源地址</a>
+                    <a href="https://bbs.binmt.cc/thread-153892-1-1.html" target="_blank" rel="noopener">附加脚本工具</a>
+                    <a href="https://github.com/Ls-WanMeng/Tool-Public/tree/main/MtEdit" target="_blank" rel="noopener">开源地址</a>
+                </span>
+                <span class="colophon-page" aria-hidden="true">P. 02</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="floating-actions" role="group" aria-label="编辑操作">
+        <button class="floating-btn" id="undoBtn" type="button" title="撤销" aria-label="撤销" disabled>
+            <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 14 4 9l5-5"></path>
+                <path d="M4 9h10a6 6 0 0 1 0 12h-3"></path>
+            </svg>
+        </button>
+        <button class="floating-btn" id="redoBtn" type="button" title="重做" aria-label="重做" disabled>
+            <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m15 14 5-5-5-5"></path>
+                <path d="M20 9H10a6 6 0 0 0 0 12h3"></path>
+            </svg>
+        </button>
+        <button class="floating-btn floating-main" id="floatingBtn" type="button" title="常用标签" aria-label="常用标签" aria-expanded="false">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V5a2 2 0 0 1 2-2h7a2 2 0 0 1 1.4.6l7.4 7.4a2 2 0 0 1 0 2.4Z"></path>
+                <circle cx="7.5" cy="7.5" r="1.2"></circle>
+            </svg>
+        </button>
+    </div>
+
+    <aside class="tag-panel" id="tagPanel" role="dialog" aria-label="常用标签">
+        <div class="tag-panel-header">
+            <div class="tag-panel-heading">
+                <span class="panel-kicker">Tag case</span>
+                <span class="tag-panel-title">常用标签</span>
+            </div>
+            <button class="tag-panel-close" type="button" onclick="toggleTagPanel()" aria-label="关闭标签面板">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="tag-panel-buttons">
+            <button class="tag-panel-btn" type="button" onclick="insertTag('b', '粗体文字')"><span class="tag-name">粗体</span><code>[b][/b]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('i', '斜体文字')"><span class="tag-name">斜体</span><code>[i][/i]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('u', '下划线')"><span class="tag-name">下划线</span><code>[u][/u]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('s', '删除线')"><span class="tag-name">删除线</span><code>[s][/s]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('url=https://example.com', '链接文字')"><span class="tag-name">链接</span><code>[url]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('img', 'https://example.com/image.jpg')"><span class="tag-name">图片</span><code>[img]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('code', '代码内容')"><span class="tag-name">代码</span><code>[code]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('hide', '隐藏内容')"><span class="tag-name">隐藏</span><code>[hide]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('quote', '引用内容')"><span class="tag-name">引用</span><code>[quote]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('list=1', '[*]项目1[*]项目2')"><span class="tag-name">列表</span><code>[list]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('table', '[tr][td]单元格[/td][/tr]')"><span class="tag-name">表格</span><code>[table]</code></button>
+            <button class="tag-panel-btn" type="button" onclick="insertTag('audio', '音乐URL')"><span class="tag-name">音频</span><code>[audio]</code></button>
+        </div>
+    </aside>
+
+    <div class="color-palette-modal" id="colorPaletteModal" role="dialog" aria-modal="true" aria-label="选择颜色">
+        <div class="color-palette-container">
+            <div class="color-palette-header">
+                <div class="modal-heading">
+                    <span class="modal-kicker">Palette</span>
+                    <span class="color-palette-title">色卡</span>
+                </div>
+                <button class="modal-close" type="button" onclick="closeColorPalette()" aria-label="关闭色卡">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6 6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="color-palette-content" id="colorPaletteContent"></div>
+            <div class="color-palette-footer">
+                <span class="modal-footnote">选中后插入到光标位置</span>
+                <div class="modal-actions">
+                    <button class="btn btn-quiet" type="button" onclick="closeColorPalette()">取消</button>
+                    <button class="btn btn-primary" type="button" onclick="applySelectedColor()">应用颜色</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rainbow-modal" id="rainbowModal" role="dialog" aria-modal="true" aria-label="彩虹文字生成器">
+        <div class="rainbow-container">
+            <div class="rainbow-header">
+                <div class="modal-heading">
+                    <span class="modal-kicker">Generator</span>
+                    <span class="rainbow-title">彩虹文字</span>
+                </div>
+                <button class="modal-close" type="button" onclick="closeRainbowGenerator()" aria-label="关闭彩虹文字生成器">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M6 6l12 12M18 6 6 18"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="rainbow-content">
+                <div class="control-group">
+                    <label for="rainbowInputText">要转换的文字<span class="en">Text</span></label>
+                    <textarea id="rainbowInputText" placeholder="输入文字，逐字上色…"></textarea>
+                </div>
+                <div class="rainbow-preview" id="rainbowPreview">
+                    <p>预览会显示在这里</p>
+                </div>
+                <p class="rainbow-note">逐字上色，插入后是一串 color 标签。</p>
+            </div>
+            <div class="rainbow-footer">
+                <button class="btn btn-quiet" type="button" onclick="generateRainbowText()">重新生成</button>
+                <button class="btn btn-primary" type="button" onclick="insertRainbowText()">插入编辑器</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="123.js?v=24"></script>
+</body>
+</html>
